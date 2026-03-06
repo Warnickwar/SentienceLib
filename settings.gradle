@@ -16,5 +16,5 @@ pluginManagement {
     }
 }
 
-rootProject.name = 'MINDlib'
+rootProject.name = 'Sentience'
 include("Common", "Fabric", "Forge")

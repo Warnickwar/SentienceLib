@@ -1,0 +1,197 @@
+package org.warnickwar.sentience.client.renderer.debug;
+
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.math.Transformation;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.debug.DebugRenderer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Position;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+public class EntityAgentDebug implements DebugRenderer.SimpleDebugRenderer {
+
+    private static final double RENDER_RANGE = 30.0D;
+    private static final float ACTION_TEXT_SCALE = 0.02F;
+    private static final float GOAL_TEXT_SCALE = 0.03F;
+
+    private static final int WHITE = -1;
+    private static final int YELLOW = -256;
+    private static final int ORANGE = -23296;
+    private static final int GREEN = -16711936;
+    private static final int GRAY = -3355444;
+    private static final int PINK = -98404;
+    private static final int RED = -65536;
+
+    private final Minecraft instance;
+    private final Map<UUID, MindInfo> mindInfoPerEntity;
+    private UUID lastLookedAtUuid;
+
+    public EntityAgentDebug(Minecraft instance) {
+        this.instance = instance;
+        this.mindInfoPerEntity = new HashMap<>();
+    }
+
+    public void addOrUpdateMindInfo(MindInfo information) {
+        this.mindInfoPerEntity.put(information.uuid, information);
+    }
+
+    public void removeMindInfo(int id) {
+        this.mindInfoPerEntity.values().removeIf(info -> info.id == id);
+    }
+
+    @Override
+    public void render(@NotNull PoseStack poseStack, @NotNull MultiBufferSource buffer, double camX, double camY, double camZ) {
+        RenderSystem.enableBlend();
+        RenderSystem.defaultBlendFunc();
+        RenderSystem.disableTexture();
+        this.clearRemovedEntities();
+        this.doRender();
+        assert this.instance.player != null;
+        if (!this.instance.player.isSpectator()) {
+            this.updateLastLookedAt();
+        }
+    }
+
+    private void doRender() {
+        mindInfoPerEntity.values().forEach(info -> {
+            if (isPlayerCloseEnough(info)) this.renderMindInfo(info);
+        });
+    }
+
+    private void renderMindInfo(MindInfo info) {
+        boolean isSelected = isEntitySelected(info);
+        int offset = 0;
+        renderTextOverMob(info.pos, offset++, info.toString(), -1, 0.03F, false);
+        if (isSelected) {
+            // Render only 5 Actions max in the Stack
+            //  Start backwards to properly render the top Action
+            for (int i = 4; i >= 0; i--) {
+                String val = i + ": ";
+                try {
+                    if (i == 0) {
+                        val += info.getCurrentAction();
+                    } else {
+                        val += info.actionStack.get(i);
+                    }
+                } catch (Exception ignored) {
+                    val += "{No Action}";
+                }
+
+                renderTextOverMob(info.pos, offset++, val, i==0?ORANGE:WHITE, ACTION_TEXT_SCALE, true);
+            }
+        }
+        boolean hasDesire = !info.currentGoal.isEmpty();
+        renderTextOverMob(info.pos, offset, hasDesire?info.currentGoal:"{No Desire}", hasDesire?GREEN:RED, GOAL_TEXT_SCALE, false);
+    }
+
+    @Override
+    public void clear() {
+        this.mindInfoPerEntity.clear();
+    }
+
+    private void clearRemovedEntities() {
+        this.mindInfoPerEntity.entrySet().removeIf(entry -> {
+            assert this.instance.level != null;
+            Entity ent = this.instance.level.getEntity(entry.getValue().id);
+            boolean isDying = ent instanceof LivingEntity lEnt && lEnt.isDeadOrDying();
+            return ent == null || isDying;
+        });
+    }
+
+    private boolean isEntitySelected(MindInfo info) {
+        return this.lastLookedAtUuid != null && this.lastLookedAtUuid.equals(info.uuid);
+    }
+
+    private boolean isPlayerCloseEnough(MindInfo info) {
+        Player player = this.instance.player;
+        assert player != null;
+        BlockPos playerPos = new BlockPos(player.getX(), info.pos.y(), player.getZ());
+        return playerPos.closerThan(new BlockPos(info.pos), RENDER_RANGE);
+    }
+
+    private void updateLastLookedAt() {
+        DebugRenderer.getTargetedEntity(this.instance.getCameraEntity(), 8).ifPresent((ent) -> {
+            this.lastLookedAtUuid = ent.getUUID();
+        });
+    }
+
+    private void renderTextOverMob(Position position, int offset, String text, int color, float scale, boolean useBackground) {
+        Camera camera = instance.gameRenderer.getMainCamera();
+        if (camera.isInitialized()) {
+            Font font = instance.font;
+            double d0 = camera.getPosition().x;
+            double d1 = camera.getPosition().y;
+            double d2 = camera.getPosition().z;
+            PoseStack posestack = RenderSystem.getModelViewStack();
+            posestack.pushPose();
+            posestack.translate((float)(position.x() - d0), ((float)((position.y()+ 2.4D + (double)offset*0.25D) - d1) + 0.07F), (double)((float)(position.z() - d2)));
+            posestack.mulPose(camera.rotation());
+            posestack.scale(scale, -scale, scale);
+            RenderSystem.enableTexture();
+            RenderSystem.disableDepthTest();
+
+            RenderSystem.depthMask(true);
+            posestack.scale(-1.0F, 1.0F, 1.0F);
+            RenderSystem.applyModelViewMatrix();
+            float f = (float)(-font.width(text)) / 2.0F;
+            f -= 0.5F / scale;
+            MultiBufferSource.BufferSource multibuffersource$buffersource = MultiBufferSource.immediate(Tesselator.getInstance().getBuilder());
+            //font.drawInBatch(text, f, 0.0F, 553648127, false, Transformation.identity().getMatrix(), multibuffersource$buffersource, true, 0, 15728880);
+            int resultBackgroundOpacity;
+            if (useBackground) {
+                float backgroundOpacity = Minecraft.getInstance().options.getBackgroundOpacity(0.25F);
+                resultBackgroundOpacity = (int)(backgroundOpacity * 255.0F) << 24;
+            } else {
+                resultBackgroundOpacity = 0;
+            }
+            font.drawInBatch(text, f, 0.0F, color, false, Transformation.identity().getMatrix(), multibuffersource$buffersource, true, resultBackgroundOpacity, 15728880);
+            multibuffersource$buffersource.endBatch();
+            RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+            RenderSystem.enableDepthTest();
+            posestack.popPose();
+            RenderSystem.applyModelViewMatrix();
+        }
+    }
+
+    public static class MindInfo {
+
+        public final ResourceLocation entityType;
+        public final UUID uuid;
+        public final int id;
+        public final Position pos;
+        public final List<String> actionStack;
+        public final String currentGoal;
+
+        public MindInfo(ResourceLocation entityType, UUID uuid, int id, Position pos, List<String> actionStack, String currentGoal) {
+            this.entityType = entityType;
+            this.uuid = uuid;
+            this.id = id;
+            this.pos = pos;
+            this.actionStack = actionStack;
+            this.currentGoal = currentGoal;
+        }
+
+        public String toString() {
+            return this.entityType.toString();
+        }
+
+        public String getCurrentAction() {
+            return !actionStack.isEmpty() ? actionStack.get(0) : "{No Action}";
+        }
+    }
+
+}
