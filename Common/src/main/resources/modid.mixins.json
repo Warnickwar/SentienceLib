@@ -1,11 +1,11 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "org.warnickwar.mindlib.mixin",
+  "package": "org.warnickwar.sentience.mixin",
   "compatibilityLevel": "JAVA_17",
   "mixins": [
     "MinecraftServerMixin",
-    "RegistryAccessor"
+    "BuiltInRegistriesAccessor"
   ],
   "client": [
     "DebugRendererMixin",

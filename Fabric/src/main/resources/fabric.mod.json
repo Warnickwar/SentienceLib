@@ -19,7 +19,7 @@
     "environment": "*",
     "entrypoints": {
       "main": [
-        "org.warnickwar.mindlib.ExampleMod"
+        "org.warnickwar.sentience.ExampleMod"
       ]
     },
     "mixins": [
