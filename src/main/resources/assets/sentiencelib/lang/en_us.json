@@ -1,0 +1,6 @@
+{
+  "debug.sentiencelib.debug_toggle": "[DEBUG] Sentience Lib Debug Viewer: %s!",
+
+  "key.categories.sentiencelib.debug": "Sentience Lib: Debug Content",
+  "key.sentiencelib.debug_toggle": "Toggle Debug Viewer"
+}
