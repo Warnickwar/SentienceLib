@@ -1,8 +1,8 @@
 package org.warnickwar.sentiencelib.test.senses;
 
 import net.minecraft.world.entity.LivingEntity;
-import org.warnickwar.sentiencelib.core.memories.MemoryManager;
-import org.warnickwar.sentiencelib.core.sense.Sense;
+import org.warnickwar.sentiencelib.api.core.memories.MemoryManager;
+import org.warnickwar.sentiencelib.api.core.sense.Sense;
 
 public class HurtSense extends Sense {
 

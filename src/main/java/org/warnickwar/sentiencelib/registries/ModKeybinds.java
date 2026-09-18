@@ -24,7 +24,7 @@ public class ModKeybinds {
         while (ModKeybinds.DEBUG_TOGGLE.consumeClick()) {
             Constants.DEBUG = !Constants.DEBUG;
             TextColor res = Constants.DEBUG ? Constants.CHAT_COLOR.Enabled : Constants.CHAT_COLOR.Disabled;
-            Minecraft.getInstance().gui.getChat().addMessage(Component.empty().append(Component.translatable("debug.sentiencelib.debug_toggle", Component.literal(Constants.DEBUG ? "Enabled" : "Disabled").withStyle(org -> org.withBold(true).withColor(res)))));
+            Minecraft.getInstance().gui.getChat().addMessage(Component.empty().append(Component.translatable("debug.sentiencelib.debug_toggle", Component.literal(Constants.DEBUG ? "ON" : "OFF").withStyle(org -> org.withBold(true).withColor(res)))));
         }
     }
 

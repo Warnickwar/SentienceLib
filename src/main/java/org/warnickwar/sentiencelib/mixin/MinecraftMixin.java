@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.warnickwar.sentiencelib.client.debug.DebugManagement;
+import org.warnickwar.sentiencelib.api.client.debug.DebugManagement;
 
 @Mixin(Minecraft.class)
 public abstract class MinecraftMixin {
@@ -22,7 +22,6 @@ public abstract class MinecraftMixin {
     @Inject(method = "tick", at = @At("HEAD"))
     void sentience$preClientTick(CallbackInfo ci) {
         profiler.push("sentience$clientDebugUpdate");
-        // TODO: Fix DeltaTime
         DebugManagement.update(getTimer().getRealtimeDeltaTicks());
         profiler.pop();
     }
