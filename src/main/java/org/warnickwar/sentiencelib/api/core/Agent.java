@@ -3,45 +3,45 @@ package org.warnickwar.sentiencelib.api.core;
 import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.Util;
 import net.minecraft.util.profiling.ProfilerFiller;
-import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
 import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.core.actions.Action;
 import org.warnickwar.sentiencelib.api.core.actions.ActionPlan;
 import org.warnickwar.sentiencelib.api.core.context.Context;
-import org.warnickwar.sentiencelib.api.core.identifier.SenIdentifier;
+import org.warnickwar.sentiencelib.api.core.context.IContextProvider;
+import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 import org.warnickwar.sentiencelib.api.core.planning.PlanBuilder;
 import org.warnickwar.sentiencelib.api.core.planning.Planners;
 import org.warnickwar.sentiencelib.api.core.sense.SenseManager;
-import org.warnickwar.sentiencelib.threading.JobManager;
 
 import javax.annotation.Nullable;
 import java.util.*;
-import java.util.concurrent.CancellationException;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class Agent<O> {
 
+    private static final Collection<IContextProvider> DEFAULT_EMPTY_PROVIDERS = ImmutableSet.of();
+
     // Cache to avoid constantly formatting
-    // If the Modid changes, we have bigger issues tbh.
+    // If the Modid changes at runtime, we have bigger issues tbh.
     private static final String profilerString$execute = Constants.MODID + ":executingAgentPlan";
     private static final String profilerString$request = Constants.MODID + ":requestingPlan";
+    private static final String profilerString$context = Constants.MODID + ":collectingContext";
 
     // Cache, don't need to make new defaults
-    private static final ContextHandler<?> DEFAULT_CTX = (ctx) -> {};
+    private static final ContextHandler<?> DEFAULT_CTX = (owner) -> DEFAULT_EMPTY_PROVIDERS;
 
     private final SenseManager senses = new SenseManager();
     // Used solely to allow for concurrent planning on the entity
-    private final Map<SenIdentifier<Belief>, IdentifiedData<Belief>> beliefs = new Object2ObjectOpenHashMap<>();
-    private final Map<SenIdentifier<Desire>, IdentifiedData<Desire>> desires = new Object2ObjectOpenHashMap<>();
-    private final Map<SenIdentifier<Action>, IdentifiedData<Action>> actions = new Object2ObjectOpenHashMap<>();
+    private final Map<Identity<Belief>, IdentifiedData<Belief>> beliefs = new Object2ObjectOpenHashMap<>();
+    private final Map<Identity<Desire>, IdentifiedData<Desire>> desires = new Object2ObjectOpenHashMap<>();
+    private final Map<Identity<Action>, IdentifiedData<Action>> actions = new Object2ObjectOpenHashMap<>();
 
     private final O owner;
 
@@ -94,14 +94,14 @@ public final class Agent<O> {
     }
 
     @SuppressWarnings("unused")
-    public Set<SenIdentifier<Belief>> getBeliefIds() { return ImmutableSet.copyOf(beliefs.keySet()); }
+    public Set<Identity<Belief>> getBeliefIds() { return ImmutableSet.copyOf(beliefs.keySet()); }
 
     @SuppressWarnings("unused")
-    public Set<SenIdentifier<Desire>> getDesireIds() {
+    public Set<Identity<Desire>> getDesireIds() {
         return ImmutableSet.copyOf(desires.keySet());
     }
 
-    public Set<SenIdentifier<Action>> getActions() {
+    public Set<Identity<Action>> getActions() {
         return ImmutableSet.copyOf(actions.keySet());
     }
 
@@ -185,22 +185,85 @@ public final class Agent<O> {
         }
     }
 
-    private void submitPlanRequest(@Nullable ProfilerFiller filler) {
+    private void submitPlanRequest(@Nullable ProfilerFiller filler)  {
         // Create new Request
         if (filler != null) {
             // Log the amount of time to request new Plan
             filler.push(profilerString$request);
         }
 
-        // Collect Context
-        HashSet<IdentifiedData<Desire>> desires = new HashSet<>(this.desires.values());
-        HashSet<IdentifiedData<Action>> actions = new HashSet<>(this.actions.values());
-        Context<O> ctx = Context.of(this);
-        contextHandler.gatherContext(ctx);
-        desires.addAll(ctx.getDesires());
-        actions.addAll(ctx.getActions());
+        Set<IdentifiedData<Desire>> desires = new HashSet<>(this.desires.values());
+        Set<IdentifiedData<Action>> actions = new HashSet<>(this.actions.values());
 
-        planRequest = JobManager.submitJob(() -> this.planner.plan(Collections.unmodifiableSet(desires), Collections.unmodifiableSet(actions), getBeliefEvaluations(desires, actions), lastDesire));
+        // Collect Context
+
+        Collection<IContextProvider> availableProviders = contextHandler.getFilteredProviders(owner);
+
+        // NOTE SEQUENTIAL SECTION
+
+//        Context<O> ctx = Context.of(owner);
+
+//        if (filler != null) {
+//            filler.push(profilerString$context);
+//        }
+
+//        availableProviders.forEach(p -> p.injectContext(ctx));
+//        var results = Context.extract(ctx);
+
+//        if (filler != null) {
+//            filler.pop();
+//        }
+        // END SEQUENTIAL SECTION
+
+        // NOTE MULTITHREADED SECTION
+
+        ExecutorService pool = Util.backgroundExecutor();
+
+        Context<O> ctx = Context.of(owner);
+
+        List<Callable<Void>> contextCollectionTasks = availableProviders.stream()
+            .map(p -> (Callable<Void>) () -> {
+                p.injectContext(ctx);
+                return null;
+            })
+            .toList();
+
+        // Request Pool to handle tasks
+        // TODO: Test this to ensure this doesn't block the Server frequently,
+        //  if that's the case it might be better to revert back to the old sequential
+        //  system
+        //  This is very likely to be stupid, and deprecated.
+        try {
+            pool.invokeAll(contextCollectionTasks);
+        } catch (InterruptedException ignored) {}
+
+        if (filler != null) {
+            filler.push(profilerString$context);
+        }
+
+        var results = Context.extract(ctx);
+
+        if (filler != null) {
+            filler.pop();
+        }
+
+        // END MULTITHREADED SECTION
+
+        desires.addAll(results.first());
+        actions.addAll(results.second());
+
+        // Belief Evaluations
+
+        // We want to collect this sequentially to prevent race conditions
+        Map<IdentifiedData<Belief>, Boolean> beliefEvals = getBeliefEvaluations(desires, actions);
+
+        planRequest = pool.submit(() ->
+            this.planner.plan(
+                Collections.unmodifiableSet(desires),
+                Collections.unmodifiableSet(actions),
+                beliefEvals,
+                lastDesire)
+        );
 
         if (filler != null) {
             filler.pop();
@@ -224,7 +287,7 @@ public final class Agent<O> {
      * Collects all Belief Evaluations into a Map for the sake of thread-safe Planning.
      * @param desires The set of known desires, including those collected by {@link Context}.
      * @param actions The set of known actions, including those collected by {@link Context}.
-     * @return A new, unmodifiable Map holding all the default evaluations of Beliefs from every Action's {@link Action#getPreconditions()}.
+     * @return A new, unmodifiable Map holding all the default evaluations of Beliefs from every Action and Belief's {@link Action#getPreconditions()}.
      */
     // This is collected BEFORE submitting the request as to avoid non-thread-safe evaluations.
     private Map<IdentifiedData<Belief>, Boolean> getBeliefEvaluations(Set<IdentifiedData<Desire>> desires, Set<IdentifiedData<Action>> actions) {
@@ -250,8 +313,8 @@ public final class Agent<O> {
 
     // Debug Collection
 
-    public List<SenIdentifier<Action>> getActionPlanIDs() {
-        List<SenIdentifier<Action>> ids = new LinkedList<>();
+    public List<Identity<Action>> getActionPlanIDs() {
+        List<Identity<Action>> ids = new LinkedList<>();
         if  (currentPlan == null) {
             return ids;
         }
@@ -259,7 +322,7 @@ public final class Agent<O> {
         return ids;
     }
 
-    public @NotNull Pair<SenIdentifier<Desire>, Double> getCurrentPlanInformation() {
+    public @NotNull Pair<Identity<Desire>, Double> getCurrentPlanInformation() {
         return currentPlan == null ? Pair.of(null, 0.0D) : Pair.of(currentPlan.desire().getIdentifier(), currentPlan.totalCost());
     }
 
@@ -274,8 +337,8 @@ public final class Agent<O> {
 
         private Consumer<SenseManager> sensorSetup = (sens) -> {};
         private Consumer<BeliefFactory> beliefSetup = (sens) -> new HashSet<>();
-        private Function<Map<SenIdentifier<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup = (beliefs) -> new HashSet<>();
-        private Function<Map<SenIdentifier<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup = (m) -> new HashSet<>();
+        private Function<Map<Identity<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup = (beliefs) -> new HashSet<>();
+        private Function<Map<Identity<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup = (m) -> new HashSet<>();
 
         Builder(O owner) {
             instance = new Agent<>(owner);
@@ -295,7 +358,8 @@ public final class Agent<O> {
 
         /**
          * Used to allow the Agent to print Profiler Stacks to the Profiler of Minecraft.
-         * Useful to track the processing time of custom Agents.
+         * Useful to track the processing time of custom Agents, primarily to see how long
+         * Context Collection takes.
          * @param profiler The supplier which returns a valid, non-null ProfilerFiller
          * @return This Builder.
          */
@@ -321,12 +385,12 @@ public final class Agent<O> {
             return this;
         }
 
-        public Builder<O> desireSetup(@NotNull Function<Map<SenIdentifier<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup) {
+        public Builder<O> desireSetup(@NotNull Function<Map<Identity<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup) {
             this.desireSetup = desireSetup;
             return this;
         }
 
-        public Builder<O> actionSetup(@NotNull Function<Map<SenIdentifier<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup) {
+        public Builder<O> actionSetup(@NotNull Function<Map<Identity<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup) {
             this.actionSetup = actionSetup;
             return this;
         }
@@ -343,15 +407,22 @@ public final class Agent<O> {
 
     }
 
+    // TODO: Migrate Context to collect all Providers
+    //  rather than having the function directly mutate a Context object
     public interface ContextHandler<A> {
         // Agent should make Context and pass into this function
 
         // TODO: Documentation
+
         /**
-         *
-         * @param ctx
          */
-        void gatherContext(Context<A> ctx);
+        Collection<IContextProvider> contextProviders(A owner);
+
+        private Collection<IContextProvider> getFilteredProviders(A owner) {
+            Collection<IContextProvider> results = contextProviders(owner);
+            results.removeIf(p -> !p.canSupply(owner));
+            return results;
+        }
     }
 
 }

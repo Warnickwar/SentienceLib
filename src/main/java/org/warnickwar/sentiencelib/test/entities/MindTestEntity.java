@@ -9,7 +9,7 @@ import org.warnickwar.sentiencelib.api.core.Agent;
 import org.warnickwar.sentiencelib.api.core.Belief;
 import org.warnickwar.sentiencelib.api.core.Desire;
 import org.warnickwar.sentiencelib.api.core.sense.SenseManager;
-import org.warnickwar.sentiencelib.api.core.identifier.SenIdentifier;
+import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 
 import java.util.HashSet;
@@ -46,11 +46,11 @@ public class MindTestEntity extends PathfinderMob {
 
     }
 
-    protected void setupDesires(Map<SenIdentifier<Belief>, IdentifiedData<Belief>> beliefs, Set<IdentifiedData<Desire>> out) {
+    protected void setupDesires(Map<Identity<Belief>, IdentifiedData<Belief>> beliefs, Set<IdentifiedData<Desire>> out) {
 
     }
 
-    protected void setupActions(Map<SenIdentifier<Desire>, IdentifiedData<Desire>> desires, Set<IdentifiedData<Action>> out) {
+    protected void setupActions(Map<Identity<Desire>, IdentifiedData<Desire>> desires, Set<IdentifiedData<Action>> out) {
 
     }
 

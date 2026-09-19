@@ -1,30 +1,30 @@
 package org.warnickwar.sentiencelib.api.core.identifier;
 
 import org.jetbrains.annotations.NotNull;
+import org.warnickwar.sentiencelib.Constants;
 
 import java.util.Objects;
 
-// A simple implementation mimicking the ResourceLocation, only that it can be typed.
-// It is prefixed with Sen- as to not intervene with Fabric's Identifiers.
-@SuppressWarnings("ClassCanBeRecord")
-public final class SenIdentifier<T> {
+@SuppressWarnings({"ClassCanBeRecord", "unused"})
+public final class Identity<T> {
 
     public final String name;
 
-    public SenIdentifier(String name) {
+    Identity(String name) {
         if (validIdentifier(name)) {
             this.name = name;
         } else  {
+            // QUESTION should I keep it  limited as such? Might be unnecessary
             throw new IllegalArgumentException("Non [a-z0-9/._-] Identifier: " + name);
         }
     }
 
-    // At the end of the day, this class is simply a record
+    // NOTE At the end of the day, this class is simply a record
     //  of String names for values. Thus, it is okay to sparingly
     //  Change the typecast of the Identifier to be of another type,
     @SuppressWarnings("unchecked")
-    public <N> SenIdentifier<N> castTo() {
-        return (SenIdentifier<N>) this;
+    public <N> Identity<N> castTo() {
+        return (Identity<N>) this;
     }
 
     @Override
@@ -35,7 +35,7 @@ public final class SenIdentifier<T> {
     @Override
     public boolean equals(Object o) {
         if (o == null || getClass() != o.getClass()) return false;
-        SenIdentifier<?> that = (SenIdentifier<?>) o;
+        Identity<?> that = (Identity<?>) o;
         return Objects.equals(name, that.name);
     }
 
@@ -55,4 +55,11 @@ public final class SenIdentifier<T> {
         return c == '_' || c == '-' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '/' || c == '.';
     }
 
+    public static <T> Identity<T> of(String modid, String name) {
+        return new Identity<>(modid + ":" + name);
+    }
+
+    public static <T> Identity<T> of(String name) {
+        return of(Constants.MODID, name);
+    }
 }

@@ -4,15 +4,15 @@ import java.util.Objects;
 
 public class IdentifiedData<T> {
 
-    private final SenIdentifier<T> identifier;
+    private final Identity<T> identifier;
     private final T value;
 
-    IdentifiedData(SenIdentifier<T> identifier, T value) {
+    IdentifiedData(Identity<T> identifier, T value) {
         this.identifier = identifier;
         this.value = value;
     }
 
-    public SenIdentifier<T> getIdentifier() {
+    public Identity<T> getIdentifier() {
         return identifier;
     }
 
@@ -20,7 +20,7 @@ public class IdentifiedData<T> {
         return value;
     }
 
-    public boolean isId(SenIdentifier<T> identifier) {
+    public boolean isId(Identity<T> identifier) {
         return this.identifier.equals(identifier);
     }
 
@@ -36,7 +36,7 @@ public class IdentifiedData<T> {
         return Objects.hash(identifier, value);
     }
 
-    public static <T> IdentifiedData<T> of(SenIdentifier<T> identifier, T value) {
+    public static <T> IdentifiedData<T> of(Identity<T> identifier, T value) {
         return new IdentifiedData<>(identifier, value);
     }
 

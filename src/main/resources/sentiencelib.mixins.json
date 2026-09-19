@@ -4,8 +4,7 @@
   "package": "org.warnickwar.sentiencelib.mixin",
   "compatibilityLevel": "JAVA_21",
   "mixins": [
-    "BuiltInRegistriesAccessor",
-    "MinecraftServerMixin"
+    "BuiltInRegistriesAccessor"
   ],
   "client": [
     "DebugRendererMixin",

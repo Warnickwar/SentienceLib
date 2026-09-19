@@ -1,7 +1,7 @@
 package org.warnickwar.sentiencelib.api.implementations;
 
 import org.warnickwar.sentiencelib.api.core.sense.SenseType;
-import org.warnickwar.sentiencelib.api.core.identifier.SenIdentifier;
+import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.api.implementations.senses.HurtSense;
 
 /**
@@ -21,6 +21,6 @@ import org.warnickwar.sentiencelib.api.implementations.senses.HurtSense;
  */
 public final class SenseKeys {
 
-    public static final SenseType<HurtSense> HURT = new SenseType<>(new SenIdentifier<>("hurtsense"));
+    public static final SenseType<HurtSense> HURT = SenseType.of("hurtsense");
 
 }

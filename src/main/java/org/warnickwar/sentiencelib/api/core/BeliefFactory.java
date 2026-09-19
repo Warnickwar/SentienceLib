@@ -1,6 +1,6 @@
 package org.warnickwar.sentiencelib.api.core;
 
-import org.warnickwar.sentiencelib.api.core.identifier.SenIdentifier;
+import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 import org.warnickwar.sentiencelib.api.core.sense.ImmutableSenseManager;
 import org.warnickwar.sentiencelib.api.core.sense.Sense;
@@ -24,7 +24,7 @@ public class BeliefFactory {
 
     // <---> Belief Management <--->
 
-    public BeliefFactory addBelief(SenIdentifier<Belief> id, Belief belief) {
+    public BeliefFactory addBelief(Identity<Belief> id, Belief belief) {
         if (locked) throw new IllegalStateException("Cannot add Belief to a closed Belief Factory!");
         results.add(IdentifiedData.of(id, belief));
         return this;

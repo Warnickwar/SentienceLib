@@ -15,7 +15,7 @@ import org.warnickwar.sentiencelib.api.core.Agent;
 import org.warnickwar.sentiencelib.api.core.Desire;
 import org.warnickwar.sentiencelib.api.core.actions.Action;
 import org.warnickwar.sentiencelib.api.core.debug.components.BasicDetailsComponent;
-import org.warnickwar.sentiencelib.api.core.identifier.SenIdentifier;
+import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.network.S2CDebugInformationPacket;
 
 import javax.annotation.Nullable;
@@ -102,17 +102,17 @@ public final class DebugInformation {
     }
 
     private static void setupBasicDetails(BasicDetailsComponent component, Agent<?> agent) {
-        SenIdentifier<Desire> currentDesire = agent.getCurrentPlanInformation().getFirst();
+        Identity<Desire> currentDesire = agent.getCurrentPlanInformation().getFirst();
         // If no Desire is Current, there is no current plan
         if (currentDesire == null) return;
 
         component.setCurrentDesire(currentDesire.name);
 
         // Collect Actions
-        List<SenIdentifier<Action>> actionQueue = agent.getActionPlanIDs();
+        List<Identity<Action>> actionQueue = agent.getActionPlanIDs();
         for (int i = 0; i < Math.min(5, actionQueue.size()); i++) {
             // Only update Action IDs for queued actions
-            SenIdentifier<Action> currentElem = actionQueue.get(i);
+            Identity<Action> currentElem = actionQueue.get(i);
             component.setQueuedAction(currentElem.name, i);
         }
     }

@@ -31,5 +31,8 @@ public interface IContextProvider {
      * @see Desire
      * @see Action
      */
-    void injectContext(Context<Agent<?>> context);
+    void injectContext(Context<?> context);
+
+    // TODO Document me
+    boolean canSupply(Object owner);
 }
