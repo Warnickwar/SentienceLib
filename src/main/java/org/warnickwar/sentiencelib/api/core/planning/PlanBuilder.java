@@ -10,6 +10,7 @@ import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 import javax.annotation.Nullable;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * <p>
@@ -43,5 +44,5 @@ public interface PlanBuilder {
      * @param lastDesire The last Desire which was run by this Agent.
      * @return a new {@link ActionPlan Plan} for the Agent to attempt to execute, or {@code null} if no valid Plan is found.
      */
-    ActionPlan plan(HashSet<IdentifiedData<Desire>> desires, HashSet<IdentifiedData<Action>> actions, Map<IdentifiedData<Belief>, Boolean> beliefEvaluations, @Nullable IdentifiedData<Desire> lastDesire);
+    ActionPlan plan(Set<IdentifiedData<Desire>> desires, Set<IdentifiedData<Action>> actions, Map<IdentifiedData<Belief>, Boolean> beliefEvaluations, @Nullable IdentifiedData<Desire> lastDesire);
 }

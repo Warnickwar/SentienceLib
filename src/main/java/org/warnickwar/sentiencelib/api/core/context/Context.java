@@ -48,10 +48,10 @@ public final class Context<A> {
         // Only check memory equality; Any other equality doesn't guarantee
         //  that the objects are truly the same.
         if (!(this.agent == other.agent)) {
-            throw new IllegalArgumentException(String.format("Merging context of Agent %s to Agent %s is not allowed;\n" +
+            throw new IllegalArgumentException(String.format("Merging Context of Agent %s to Agent %s is not allowed;\n" +
                 "Agents MUST be equal!", this.agent, other.agent));
         }
-        var ctx = new Context<>(agent);
+        Context<A> ctx = new Context<>(agent);
         ctx.actions.addAll(this.actions);
         ctx.desires.addAll(this.desires);
         ctx.actions.addAll(other.actions);

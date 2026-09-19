@@ -1,17 +1,18 @@
 package org.warnickwar.sentiencelib.api.core.actions;
 
+import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.core.Belief;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Set;
 import java.util.function.Supplier;
 
 public final class Action {
-
-    private static final Logger LOG = Constants.LOG;
 
     private static final Supplier<Double> DEFAULT_COST = () -> 1.0D;
     private static final Supplier<Double> DEFAULT_UTILITY = () -> 0.5D;
@@ -19,23 +20,32 @@ public final class Action {
     private Supplier<Double> cost;
     private Supplier<Double> utility;
 
-    private final HashSet<IdentifiedData<Belief>> preconditions;
-    private final HashSet<IdentifiedData<Belief>> effects;
+    private final Set<IdentifiedData<Belief>> preconditions;
+    private final Set<IdentifiedData<Belief>> effects;
+
+    private final Set<IdentifiedData<Belief>> preconditions$Unmodifiable;
+    private final Set<IdentifiedData<Belief>> effects$Unmodifiable;
 
     private boolean forceEnd;
-    private boolean shouldLog;
 
-    @SuppressWarnings("DataFlowIssue")
     @NotNull
-    private IStrategy strategy = null;
+    private final IStrategy strategy;
 
-    public Action(IStrategy strategy) {
+    Action(@NotNull IStrategy strategy,
+           @NotNull Set<IdentifiedData<Belief>> preconditions,
+           @NotNull Set<IdentifiedData<Belief>> effects) {
+        this.strategy = strategy;
+
         cost = DEFAULT_COST;
         utility = DEFAULT_UTILITY;
-        preconditions = new HashSet<>();
-        effects = new HashSet<>();
+
+        this.preconditions = preconditions;
+        this.effects = effects;
+
+        preconditions$Unmodifiable = Collections.unmodifiableSet(preconditions);
+        effects$Unmodifiable = Collections.unmodifiableSet(effects);
+
         forceEnd = false;
-        shouldLog = false;
     }
 
     public double getCost() {
@@ -55,16 +65,12 @@ public final class Action {
         return util == 0D ? 0.0D : getCost() / util;
     }
 
-    public boolean shouldLog() {
-        return shouldLog;
+    public Set<IdentifiedData<Belief>> getPreconditions() {
+        return preconditions$Unmodifiable;
     }
 
-    public HashSet<IdentifiedData<Belief>> getPreconditions() {
-        return new HashSet<>(preconditions);
-    }
-
-    public HashSet<IdentifiedData<Belief>> getEffects() {
-        return new HashSet<>(effects);
+    public Set<IdentifiedData<Belief>> getEffects() {
+        return effects$Unmodifiable;
     }
 
     public boolean isComplete() {
@@ -86,12 +92,16 @@ public final class Action {
 
     public void stop() { this.strategy.stop(); }
 
+    public static Action.Builder start(IStrategy strategy) {
+        return new Builder(strategy);
+    }
+
     public static class Builder {
 
         private final Action action;
 
-        public Builder(IStrategy strategy) {
-            action = new Action(strategy);
+        Builder(IStrategy strategy) {
+            action = new Action(strategy, new HashSet<>(), new HashSet<>());
         }
 
         public Builder withCost(Supplier<Double> cost) {
@@ -119,11 +129,6 @@ public final class Action {
 
         public Builder withEffect(IdentifiedData<Belief> belief) {
             action.effects.add(belief);
-            return this;
-        }
-
-        public Builder debug() {
-            action.shouldLog = true;
             return this;
         }
 

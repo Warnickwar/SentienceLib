@@ -46,8 +46,8 @@ public final class Planners {
                     Node currentNode = goalPost;
                     while (!currentNode.leaves.isEmpty()) {
                         currentNode.leaves.sort(Planners::compareNodes);
-                        currentNode = currentNode.leaves.get(0);
-                        actionStack.add(0, currentNode.action);
+                        currentNode = currentNode.leaves.getFirst();
+                        actionStack.addFirst(currentNode.action);
                     }
                     return new ActionPlan(desire, actionStack, goalPost.appeal);
                 }
@@ -84,7 +84,7 @@ public final class Planners {
                 Node newNode = new Node(parent, action, newRequired, parent.appeal + action.getValue().getAppeal());
 
                 if (findPathDFS(newNode, actions, evals)) {
-                    parent.leaves.add(0, newNode);
+                    parent.leaves.addFirst(newNode);
                     newRequired.removeAll(action.getValue().getPreconditions());
                 }
 
@@ -128,6 +128,7 @@ public final class Planners {
 
     private static class Node {
 
+        // TODO: Why is this here?
         @Nullable
         private final Node parent;
         @Nullable

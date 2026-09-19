@@ -10,19 +10,20 @@ import org.warnickwar.sentiencelib.api.core.Agent;
  */
 public abstract class Sense {
 
-    private final int tickTimer;
+    private final int scanTimer;
     private int ticksPassed;
 
     /**
-     * @param tickTimer How many ticks should pass before {@link Sense#onTick()} is run once.
+     * @param scanTimer How many ticks should pass before {@link Sense#onTick()} is run once.
      */
-    protected Sense(int tickTimer) {
-        this.tickTimer = tickTimer;
-        this.ticksPassed = this.tickTimer;
+    protected Sense(int scanTimer) {
+        this.scanTimer = scanTimer;
+        // Execute immediately as the first case
+        this.ticksPassed = this.scanTimer;
     }
 
     public final boolean tick() {
-        if (ticksPassed++ >= tickTimer) {
+        if (ticksPassed++ >= scanTimer) {
             this.onTick();
             this.ticksPassed = 0;
             return true;
@@ -30,9 +31,15 @@ public abstract class Sense {
         return false;
     }
 
-    protected abstract void onAdd();
+    /**
+     * What should happen when the Sense is added to an Agent.
+     */
+    protected void onAdd() {};
 
-    protected abstract void onRemove();
+    /**
+     * What should happen when the Sense is removed from an Agent.
+     */
+    protected void onRemove() {};
 
     /**
      * What should happen when the Sense executes.

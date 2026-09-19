@@ -20,10 +20,6 @@ public class IdentifiedData<T> {
         return value;
     }
 
-    public boolean isData(T other) {
-        return Objects.equals(value, other);
-    }
-
     public boolean isId(SenIdentifier<T> identifier) {
         return this.identifier.equals(identifier);
     }

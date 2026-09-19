@@ -1,6 +1,8 @@
 package org.warnickwar.sentiencelib.api.core;
 
+import com.google.common.collect.ImmutableSet;
 import com.mojang.datafixers.util.Pair;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +21,6 @@ import org.warnickwar.sentiencelib.threading.JobManager;
 import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.CancellationException;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.function.Consumer;
@@ -28,18 +29,21 @@ import java.util.function.Supplier;
 
 public final class Agent<O> {
 
-    private static final Logger LOGGER = Constants.LOG;
+    // Cache to avoid constantly formatting
+    // If the Modid changes, we have bigger issues tbh.
+    private static final String profilerString$execute = Constants.MODID + ":executingAgentPlan";
+    private static final String profilerString$request = Constants.MODID + ":requestingPlan";
 
+    // Cache, don't need to make new defaults
     private static final ContextHandler<?> DEFAULT_CTX = (ctx) -> {};
 
     private final SenseManager senses = new SenseManager();
     // Used solely to allow for concurrent planning on the entity
-    private final Map<SenIdentifier<Belief>, IdentifiedData<Belief>> beliefs = new ConcurrentHashMap<>();
-    private final Map<SenIdentifier<Desire>, IdentifiedData<Desire>> desires = new ConcurrentHashMap<>();
-    private final Map<SenIdentifier<Action>, IdentifiedData<Action>> actions = new ConcurrentHashMap<>();
+    private final Map<SenIdentifier<Belief>, IdentifiedData<Belief>> beliefs = new Object2ObjectOpenHashMap<>();
+    private final Map<SenIdentifier<Desire>, IdentifiedData<Desire>> desires = new Object2ObjectOpenHashMap<>();
+    private final Map<SenIdentifier<Action>, IdentifiedData<Action>> actions = new Object2ObjectOpenHashMap<>();
 
     private final O owner;
-    private final Supplier<Vec3> posSupplier;
 
     @SuppressWarnings("unchecked")
     private ContextHandler<O> contextHandler = (ContextHandler<O>) DEFAULT_CTX;
@@ -73,40 +77,36 @@ public final class Agent<O> {
       */
     private Future<ActionPlan> planRequest = null;
 
-    Agent(O owner, Supplier<Vec3> positionSupplier) {
+    Agent(O owner) {
         this.owner = owner;
-        this.posSupplier = positionSupplier;
     }
 
     // Generic Methods
 
+    @SuppressWarnings("unused")
     public O getOwner() {
         return owner;
     }
 
-    public Vec3 getPosition() {
-        return posSupplier.get();
-    }
-
+    @SuppressWarnings("unused")
     public SenseManager getSenses() {
         return senses;
     }
 
-    public Set<SenIdentifier<Belief>> getBeliefIds() {
-        return new HashSet<>(beliefs.keySet());
-    }
+    @SuppressWarnings("unused")
+    public Set<SenIdentifier<Belief>> getBeliefIds() { return ImmutableSet.copyOf(beliefs.keySet()); }
 
+    @SuppressWarnings("unused")
     public Set<SenIdentifier<Desire>> getDesireIds() {
-        return new HashSet<>(desires.keySet());
+        return ImmutableSet.copyOf(desires.keySet());
     }
 
-    public Set<IdentifiedData<Action>> getActions() {
-        return new HashSet<>(actions.values());
+    public Set<SenIdentifier<Action>> getActions() {
+        return ImmutableSet.copyOf(actions.keySet());
     }
 
     // Processing Methods
 
-    // TODO: Make the Tick handle the Plan after Sensors all tick.
     public void tick() {
         senses.tick();
         ProfilerFiller filler = profiler.get();
@@ -117,7 +117,7 @@ public final class Agent<O> {
             // Execute current Plan
 
             if (filler != null) {
-                filler.push(String.format("%s:executingAgentPlan", Constants.MODID));
+                filler.push(profilerString$execute);
             }
 
             Action val = currentAction.getValue();
@@ -125,7 +125,7 @@ public final class Agent<O> {
 
             if (val.isComplete()) {
                 val.stop();
-                var end = currentPlan.actions().isEmpty();
+                boolean end = currentPlan.actions().isEmpty();
                 // If at the end, set Action to null
                 currentAction = end ? null : currentPlan.actions().pop();
 
@@ -178,7 +178,7 @@ public final class Agent<O> {
                 } catch (InterruptedException | CancellationException ignored) {
                     // Interrupted Plan, ignore and continue.
                 } catch (ExecutionException e) {
-                    LOGGER.error("Failed to generate plan for Agent {}!\nException: {}", this.owner, e);
+                    Constants.LOG.error("Failed to generate plan for Agent {}!\nException: {}", this.owner, e);
                 }
             }
             planRequest = null;
@@ -189,7 +189,7 @@ public final class Agent<O> {
         // Create new Request
         if (filler != null) {
             // Log the amount of time to request new Plan
-            filler.push(String.format("%s:requestingPlan", Constants.MODID));
+            filler.push(profilerString$request);
         }
 
         // Collect Context
@@ -200,7 +200,7 @@ public final class Agent<O> {
         desires.addAll(ctx.getDesires());
         actions.addAll(ctx.getActions());
 
-        planRequest = JobManager.submitJob(() -> this.planner.plan(desires, actions, getBeliefEvaluations(desires, actions), lastDesire));
+        planRequest = JobManager.submitJob(() -> this.planner.plan(Collections.unmodifiableSet(desires), Collections.unmodifiableSet(actions), getBeliefEvaluations(desires, actions), lastDesire));
 
         if (filler != null) {
             filler.pop();
@@ -224,7 +224,7 @@ public final class Agent<O> {
      * Collects all Belief Evaluations into a Map for the sake of thread-safe Planning.
      * @param desires The set of known desires, including those collected by {@link Context}.
      * @param actions The set of known actions, including those collected by {@link Context}.
-     * @return A new Map holding all the default evaluations of Beliefs from every Action's {@link Action#getPreconditions()}.
+     * @return A new, unmodifiable Map holding all the default evaluations of Beliefs from every Action's {@link Action#getPreconditions()}.
      */
     // This is collected BEFORE submitting the request as to avoid non-thread-safe evaluations.
     private Map<IdentifiedData<Belief>, Boolean> getBeliefEvaluations(Set<IdentifiedData<Desire>> desires, Set<IdentifiedData<Action>> actions) {
@@ -245,7 +245,7 @@ public final class Agent<O> {
                 }
             });
         });
-        return res;
+        return Collections.unmodifiableMap(res);
     }
 
     // Debug Collection
@@ -255,9 +255,7 @@ public final class Agent<O> {
         if  (currentPlan == null) {
             return ids;
         }
-        currentPlan.actions().forEach(action -> {
-            ids.add(action.getIdentifier());
-        });
+        currentPlan.actions().forEach(action -> ids.add(action.getIdentifier()));
         return ids;
     }
 
@@ -265,8 +263,11 @@ public final class Agent<O> {
         return currentPlan == null ? Pair.of(null, 0.0D) : Pair.of(currentPlan.desire().getIdentifier(), currentPlan.totalCost());
     }
 
-    // TODO: Work on the Planning system
+    public static <O> Agent.Builder<O> start(O owner) {
+        return new Agent.Builder<>(owner);
+    }
 
+    // TODO: Documentation of this entire fucking class
     public static class Builder<O> {
 
         private final Agent<O> instance;
@@ -276,15 +277,17 @@ public final class Agent<O> {
         private Function<Map<SenIdentifier<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup = (beliefs) -> new HashSet<>();
         private Function<Map<SenIdentifier<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup = (m) -> new HashSet<>();
 
-        public Builder(O owner, Supplier<Vec3> positionSupplier) {
-            instance = new Agent<>(owner, positionSupplier);
+        Builder(O owner) {
+            instance = new Agent<>(owner);
         }
 
+        @SuppressWarnings("unused")
         public Builder<O> planBuilder(@NotNull PlanBuilder planBuilder) {
             instance.planner = planBuilder;
             return this;
         }
 
+        @SuppressWarnings("unused")
         public Builder<O> shouldAlwaysReplan(boolean shouldAlwaysReplan) {
             instance.shouldReplanAlways = shouldAlwaysReplan;
             return this;
@@ -296,11 +299,13 @@ public final class Agent<O> {
          * @param profiler The supplier which returns a valid, non-null ProfilerFiller
          * @return This Builder.
          */
+        @SuppressWarnings("unused")
         public Builder<O> setProfiler(@Nullable Supplier<ProfilerFiller> profiler) {
             instance.profiler = profiler;
             return this;
         }
 
+        @SuppressWarnings("unused")
         public Builder<O> contextHandler(@NotNull ContextHandler<O> contextHandler) {
             instance.contextHandler = contextHandler;
             return this;
@@ -330,22 +335,22 @@ public final class Agent<O> {
             sensorSetup.accept(instance.senses);
             var beliefs = new BeliefFactory(instance.senses);
             beliefSetup.accept(beliefs);
-            beliefs.closeFactory().forEach((data) -> {
-                instance.beliefs.put(data.getIdentifier(), data);
-            });
-            desireSetup.apply(Map.copyOf(instance.beliefs)).forEach(data -> {
-                instance.desires.put(data.getIdentifier(), data);
-            });
-            actionSetup.apply(Map.copyOf(instance.desires)).forEach(data -> {
-                instance.actions.put(data.getIdentifier(), data);
-            });
+            beliefs.closeFactory().forEach((data) -> instance.beliefs.put(data.getIdentifier(), data));
+            desireSetup.apply(Map.copyOf(instance.beliefs)).forEach(data -> instance.desires.put(data.getIdentifier(), data));
+            actionSetup.apply(Map.copyOf(instance.desires)).forEach(data -> instance.actions.put(data.getIdentifier(), data));
             return instance;
         }
 
     }
 
     public interface ContextHandler<A> {
-        // Agent should make Context and pass
+        // Agent should make Context and pass into this function
+
+        // TODO: Documentation
+        /**
+         *
+         * @param ctx
+         */
         void gatherContext(Context<A> ctx);
     }
 

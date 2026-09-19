@@ -22,7 +22,7 @@ public class MindTestEntity extends PathfinderMob {
 
     protected MindTestEntity(EntityType<? extends PathfinderMob> type, Level world) {
         super(type, world);
-        this.agent = new Agent.Builder<>(this, this::position)
+        this.agent = Agent.start(this)
             .sensorSetup(this::setupSensors)
             .beliefSetup(this::setupBeliefs)
             .desireSetup(beliefs -> {
