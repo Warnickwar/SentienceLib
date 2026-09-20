@@ -1,7 +1,6 @@
 package org.warnickwar.sentiencelib.api.core.debug.components;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.warnickwar.sentiencelib.Constants;

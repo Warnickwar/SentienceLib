@@ -22,24 +22,24 @@ public abstract class Sense {
         this.ticksPassed = this.scanTimer;
     }
 
-    public final boolean tick() {
+    public final void tick() {
         if (ticksPassed++ >= scanTimer) {
             this.onTick();
             this.ticksPassed = 0;
-            return true;
         }
-        return false;
     }
 
     /**
      * What should happen when the Sense is added to an Agent.
      */
-    protected void onAdd() {};
+    @SuppressWarnings("EmptyMethod")
+    protected void onAdd() {}
 
     /**
      * What should happen when the Sense is removed from an Agent.
      */
-    protected void onRemove() {};
+    @SuppressWarnings("EmptyMethod")
+    protected void onRemove() {}
 
     /**
      * What should happen when the Sense executes.

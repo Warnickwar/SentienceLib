@@ -8,7 +8,6 @@ import net.minecraft.world.phys.Vec3;
 import net.neoforged.fml.loading.FMLEnvironment;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class Constants {
 
@@ -18,7 +17,7 @@ public class Constants {
 
     public static boolean DEBUG = !FMLEnvironment.production;
 
-    public static Vec3 DEFAULT_LOCATION = new Vec3(0, 0, 0);
+    public final static Vec3 DEFAULT_LOCATION = new Vec3(0, 0, 0);
 
     public static ResourceLocation loc(String name) {
         return ResourceLocation.fromNamespaceAndPath(MODID, name);

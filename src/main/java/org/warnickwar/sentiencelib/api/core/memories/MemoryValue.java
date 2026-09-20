@@ -42,9 +42,7 @@ public class MemoryValue<T> implements Tickable {
             if (typeRes.result().isEmpty()) return DataResult.error(() -> "Could not find a Memory type to parse from!");
             MemoryModuleType<?> type = typeRes.result().get();
             AtomicReference<DataResult<ExpirableValue<?>>> finalRes = new AtomicReference<>(DataResult.error(() -> "Could not parse a value for memory type " + BuiltInRegistries.MEMORY_MODULE_TYPE.getKey(type) + "!"));
-            type.getCodec().map(codec -> codec.decode(ops, map.get("value"))).flatMap(DataResult::result).ifPresent(pair -> {
-                finalRes.set(DataResult.success(pair.getFirst()));
-            });
+            type.getCodec().map(codec -> codec.decode(ops, map.get("value"))).flatMap(DataResult::result).ifPresent(pair -> finalRes.set(DataResult.success(pair.getFirst())));
 
             DataResult<ExpirableValue<?>> res = finalRes.get();
             if (res.isError()) return res.map(t -> null);

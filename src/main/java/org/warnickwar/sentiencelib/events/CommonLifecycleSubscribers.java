@@ -1,14 +1,16 @@
 package org.warnickwar.sentiencelib.events;
 
-import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
+import net.neoforged.neoforge.registries.RegisterEvent;
 import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.ModRegistries;
 import org.warnickwar.sentiencelib.api.client.events.ClientNetworkHandlers;
 import org.warnickwar.sentiencelib.network.S2CDebugInformationPacket;
+import org.warnickwar.sentiencelib.registries.ModEntities;
 
 /**
  * Runs on both the Logical Client and Server;
@@ -23,8 +25,17 @@ public class CommonLifecycleSubscribers {
     }
 
     @SubscribeEvent
+    public static void handleRegistration(RegisterEvent evt) {
+        if (evt.getRegistryKey().equals(BuiltInRegistries.ENTITY_TYPE.key())) {
+            ModEntities.register(evt);
+        }
+    }
+
+    @SubscribeEvent
     public static void registerNetworkPayloads(RegisterPayloadHandlersEvent evt) {
         final PayloadRegistrar registrar = evt.registrar(Constants.NETWORK.VERSION);
+
+        // Debug System
         registrar.playToClient(
             S2CDebugInformationPacket.TYPE,
             S2CDebugInformationPacket.STREAM_CODEC,

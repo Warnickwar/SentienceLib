@@ -42,7 +42,7 @@ public class MemoryManager extends ImmutableMemoryManager {
         });
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({"unchecked", "UnusedReturnValue"})
     @Nullable
     public <T> T removeMemory(@NotNull MemoryModuleType<T> type) {
         MemoryValue<T> val = (MemoryValue<T>) this.memories.remove(type);
@@ -77,9 +77,7 @@ public class MemoryManager extends ImmutableMemoryManager {
             // Do it like this instead of turning the MemoryValue to a ListCodec
             //  So that memories from addons can get wiped.
             var out =  MemoryValue.CODEC.decode(NbtOps.INSTANCE, elem);
-            out.result().ifPresent(val -> {
-                memories.put(val.getFirst().getType(), val.getFirst());
-            });
+            out.result().ifPresent(val -> memories.put(val.getFirst().getType(), val.getFirst()));
         });
 
     }

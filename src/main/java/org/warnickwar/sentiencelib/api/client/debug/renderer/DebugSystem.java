@@ -34,6 +34,7 @@ import java.util.Set;
  * @author Warnickwar
  * @since 0.3
  */
+@SuppressWarnings({"EmptyMethod", "unused"})
 public abstract class DebugSystem {
 
     /**
@@ -88,6 +89,7 @@ public abstract class DebugSystem {
      * @return The Priority of Rendering for this system compared to other systems.
      *          Lower values get rendered first.
      */
+    @SuppressWarnings("SameReturnValue")
     public int renderPriority() {
         return 0;
     }

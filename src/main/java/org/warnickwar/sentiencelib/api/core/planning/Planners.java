@@ -130,6 +130,7 @@ public final class Planners {
 
         // TODO: Why is this here?
         @Nullable
+        @SuppressWarnings("FieldCanBeLocal")
         private final Node parent;
         @Nullable
         private final IdentifiedData<Action> action;

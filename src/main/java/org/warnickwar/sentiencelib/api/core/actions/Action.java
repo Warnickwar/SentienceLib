@@ -1,9 +1,6 @@
 package org.warnickwar.sentiencelib.api.core.actions;
 
-import com.google.common.collect.ImmutableSet;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.core.Belief;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 

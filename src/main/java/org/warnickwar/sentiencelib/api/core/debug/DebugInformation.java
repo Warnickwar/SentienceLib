@@ -31,9 +31,7 @@ public final class DebugInformation {
             UUIDUtil.STREAM_CODEC.encode(buff, info.uuid);
             ByteBufCodecs.FLOAT.encode(buff, info.timeToLive);
             ByteBufCodecs.INT.encode(buff, info.components.size());
-            info.components.forEach((type, data) -> {
-                DebugComponent.STREAM_CODEC.encode(buff, data);
-            });
+            info.components.forEach((type, data) -> DebugComponent.STREAM_CODEC.encode(buff, data));
         },
         buff -> {
             DebugInformation.Builder builder = new Builder(UUIDUtil.STREAM_CODEC.decode(buff), ByteBufCodecs.FLOAT.decode(buff));

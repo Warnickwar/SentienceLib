@@ -1,7 +1,6 @@
 package org.warnickwar.sentiencelib.api.implementations;
 
 import org.warnickwar.sentiencelib.api.core.sense.SenseType;
-import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.api.implementations.senses.HurtSense;
 
 /**

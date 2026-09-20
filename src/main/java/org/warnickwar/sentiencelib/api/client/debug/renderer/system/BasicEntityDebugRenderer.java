@@ -170,6 +170,7 @@ public class BasicEntityDebugRenderer extends DebugSystem {
         RenderSystem.applyModelViewMatrix();
     }
 
+    @SuppressWarnings("SameParameterValue")
     private static boolean hitsAABB(Vec3 eyePosition, Vec3 viewVector, AABB target, double range) {
         Optional<Vec3> clipResult = target.clip(eyePosition, viewVector);
         if (clipResult.isPresent()) {

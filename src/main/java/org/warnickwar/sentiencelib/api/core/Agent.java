@@ -21,7 +21,6 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public final class Agent<O> {
@@ -195,57 +194,61 @@ public final class Agent<O> {
         Set<IdentifiedData<Desire>> desires = new HashSet<>(this.desires.values());
         Set<IdentifiedData<Action>> actions = new HashSet<>(this.actions.values());
 
+        ExecutorService pool = Util.backgroundExecutor();
+
         // Collect Context
 
         Collection<IContextProvider> availableProviders = contextHandler.getFilteredProviders(owner);
 
+        // This is one of those things where I wish Java had Regions like C#...
+
         // NOTE SEQUENTIAL SECTION
 
-//        Context<O> ctx = Context.of(owner);
-
-//        if (filler != null) {
-//            filler.push(profilerString$context);
-//        }
-
-//        availableProviders.forEach(p -> p.injectContext(ctx));
-//        var results = Context.extract(ctx);
-
-//        if (filler != null) {
-//            filler.pop();
-//        }
-        // END SEQUENTIAL SECTION
-
-        // NOTE MULTITHREADED SECTION
-
-        ExecutorService pool = Util.backgroundExecutor();
-
         Context<O> ctx = Context.of(owner);
-
-        List<Callable<Void>> contextCollectionTasks = availableProviders.stream()
-            .map(p -> (Callable<Void>) () -> {
-                p.injectContext(ctx);
-                return null;
-            })
-            .toList();
-
-        // Request Pool to handle tasks
-        // TODO: Test this to ensure this doesn't block the Server frequently,
-        //  if that's the case it might be better to revert back to the old sequential
-        //  system
-        //  This is very likely to be stupid, and deprecated.
-        try {
-            pool.invokeAll(contextCollectionTasks);
-        } catch (InterruptedException ignored) {}
 
         if (filler != null) {
             filler.push(profilerString$context);
         }
 
+        availableProviders.forEach(p -> p.injectContext(ctx));
         var results = Context.extract(ctx);
 
         if (filler != null) {
             filler.pop();
         }
+
+        // END SEQUENTIAL SECTION
+
+        // NOTE MULTITHREADED SECTION
+
+//
+//        Context<O> ctx = Context.of(owner);
+//
+//        List<Callable<Void>> contextCollectionTasks = availableProviders.stream()
+//            .map(p -> (Callable<Void>) () -> {
+//                p.injectContext(ctx);
+//                return null;
+//            })
+//            .toList();
+//
+//        // Request Pool to handle tasks
+//        // TODO: Test this to ensure this doesn't block the Server frequently,
+//        //  if that's the case it might be better to revert back to the old sequential
+//        //  system
+//        //  This is very likely to be stupid, and deprecated.
+//        try {
+//            pool.invokeAll(contextCollectionTasks);
+//        } catch (InterruptedException ignored) {}
+//
+//        if (filler != null) {
+//            filler.push(profilerString$context);
+//        }
+//
+//        var results = Context.extract(ctx);
+//
+//        if (filler != null) {
+//            filler.pop();
+//        }
 
         // END MULTITHREADED SECTION
 
@@ -336,9 +339,9 @@ public final class Agent<O> {
         private final Agent<O> instance;
 
         private Consumer<SenseManager> sensorSetup = (sens) -> {};
-        private Consumer<BeliefFactory> beliefSetup = (sens) -> new HashSet<>();
-        private Function<Map<Identity<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup = (beliefs) -> new HashSet<>();
-        private Function<Map<Identity<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup = (m) -> new HashSet<>();
+        private Consumer<BeliefFactory> beliefSetup = (sens) -> {};
+        private Consumer<DesireFactory> desireSetup = (beliefs) -> {};
+        private Consumer<ActionFactory> actionSetup = (m) -> {};
 
         Builder(O owner) {
             instance = new Agent<>(owner);
@@ -385,24 +388,50 @@ public final class Agent<O> {
             return this;
         }
 
-        public Builder<O> desireSetup(@NotNull Function<Map<Identity<Belief>, IdentifiedData<Belief>>, Set<IdentifiedData<Desire>>> desireSetup) {
+        public Builder<O> desireSetup(@NotNull Consumer<DesireFactory> desireSetup) {
             this.desireSetup = desireSetup;
             return this;
         }
 
-        public Builder<O> actionSetup(@NotNull Function<Map<Identity<Desire>, IdentifiedData<Desire>>, Set<IdentifiedData<Action>>> actionSetup) {
+        public Builder<O> actionSetup(@NotNull Consumer<ActionFactory> actionSetup) {
             this.actionSetup = actionSetup;
             return this;
         }
 
         public Agent<O> build() {
+            // Set up Senses, important to every part of building
             sensorSetup.accept(instance.senses);
-            var beliefs = new BeliefFactory(instance.senses);
-            beliefSetup.accept(beliefs);
-            beliefs.closeFactory().forEach((data) -> instance.beliefs.put(data.getIdentifier(), data));
-            desireSetup.apply(Map.copyOf(instance.beliefs)).forEach(data -> instance.desires.put(data.getIdentifier(), data));
-            actionSetup.apply(Map.copyOf(instance.desires)).forEach(data -> instance.actions.put(data.getIdentifier(), data));
+
+            // Collect Factories
+            var beliefFactory = new BeliefFactory(instance.senses);
+            var desireFactory = new DesireFactory(instance.beliefs);
+            var actionFactory = new ActionFactory(instance.desires);
+
+            // Delegate Factories out
+            beliefSetup.accept(beliefFactory);
+            desireSetup.accept(desireFactory);
+            actionSetup.accept(actionFactory);
+
+            // Collect returned data and inject into Agent
+            // QUESTION maybe figure out how to have it inject directly into the Agent?
+
+            beliefFactory.closeFactory().forEach(this::addBelief);
+            desireFactory.closeFactory().forEach(this::addDesire);
+            actionFactory.closeFactory().forEach(this::addAction);
+
             return instance;
+        }
+
+        private void addBelief(IdentifiedData<Belief> data) {
+            instance.beliefs.put(data.getIdentifier(), data);
+        }
+
+        private void addDesire(IdentifiedData<Desire> data) {
+            instance.desires.put(data.getIdentifier(), data);
+        }
+
+        private void addAction(IdentifiedData<Action> data) {
+            instance.actions.put(data.getIdentifier(), data);
         }
 
     }
@@ -416,10 +445,10 @@ public final class Agent<O> {
 
         /**
          */
-        Collection<IContextProvider> contextProviders(A owner);
+        Collection<IContextProvider> getContextProviders(A owner);
 
         private Collection<IContextProvider> getFilteredProviders(A owner) {
-            Collection<IContextProvider> results = contextProviders(owner);
+            Collection<IContextProvider> results = getContextProviders(owner);
             results.removeIf(p -> !p.canSupply(owner));
             return results;
         }

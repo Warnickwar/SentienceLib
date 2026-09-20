@@ -1,19 +1,17 @@
 package org.warnickwar.sentiencelib.api.core.context;
 
 import it.unimi.dsi.fastutil.Pair;
-import org.checkerframework.checker.units.qual.A;
 import org.jetbrains.annotations.NotNull;
 import org.warnickwar.sentiencelib.api.core.actions.Action;
-import org.warnickwar.sentiencelib.api.core.Agent;
 import org.warnickwar.sentiencelib.api.core.Desire;
-import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
+import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+// QUESTION is it even possible to have less memory overhead with this?
 public final class Context<O> {
 
     private final O owner;
@@ -26,26 +24,24 @@ public final class Context<O> {
         this.desires = ConcurrentHashMap.newKeySet();
     }
 
-    public O getOwner() {
-        return owner;
+    public void addAction(Identity<Action> id, Action action) {
+        addAction(IdentifiedData.of(id, action));
     }
 
-    public Context<O> merge(Context<O> other) {
-        // Only check memory equality; Any other equality doesn't guarantee
-        //  that the objects are truly the same.
-        if (this.owner != other.owner) {
-            throw new IllegalArgumentException(String.format("Merging Context of Owner %s to Owner %s is not allowed;\n" +
-                "Owners MUST be equal!", this.owner, other.owner));
-        }
+    public void addAction(IdentifiedData<Action> data) {
+        actions.add(data);
+    }
 
-        Context<O> ctx = new Context<>(owner);
+    public void addDesire(Identity<Desire> id, Desire action) {
+        addDesire(IdentifiedData.of(id, action));
+    }
 
-        ctx.actions.addAll(this.actions);
-        ctx.desires.addAll(this.desires);
+    public void addDesire(IdentifiedData<Desire> data) {
+        desires.add(data);
+    }
 
-        ctx.actions.addAll(other.actions);
-        ctx.desires.addAll(other.desires);
-        return ctx;
+    public O getOwner() {
+        return owner;
     }
 
     @Override

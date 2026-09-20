@@ -7,37 +7,37 @@ import org.warnickwar.sentiencelib.api.core.debug.components.*;
 
 public final class ModDebugComponents {
 
-    public static DebugComponentType<BasicDetailsComponent> BASIC_DETAILS =
+    public static final DebugComponentType<BasicDetailsComponent> BASIC_DETAILS =
         register(
             "basic_details",
             DebugComponentType.create(BasicDetailsComponent::new)
         );
 
-    public static DebugComponentType<LevelComponent> LEVEL =
+    public static final DebugComponentType<LevelComponent> LEVEL =
         register(
             "level",
             DebugComponentType.create(LevelComponent::new)
         );
 
-    public static DebugComponentType<PositionComponent> POSITION =
+    public static final DebugComponentType<PositionComponent> POSITION =
         register(
             "world_position",
             DebugComponentType.create(PositionComponent::new)
         );
 
-    public static DebugComponentType<VelocityComponent> VELOCITY =
+    public static final DebugComponentType<VelocityComponent> VELOCITY =
         register(
             "velocity",
             DebugComponentType.create(VelocityComponent::new)
         );
 
-    public static DebugComponentType<MobNameComponent> MOB_NAME =
+    public static final DebugComponentType<MobNameComponent> MOB_NAME =
         register(
             "mob_name",
             DebugComponentType.create(MobNameComponent::new)
         );
 
-    public static DebugComponentType<EntityTypeComponent> MOB_TYPE =
+    public static final DebugComponentType<EntityTypeComponent> MOB_TYPE =
         register(
             "entity_type",
             DebugComponentType.create(EntityTypeComponent::new)

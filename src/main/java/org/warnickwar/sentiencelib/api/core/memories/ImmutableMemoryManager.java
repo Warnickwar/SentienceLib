@@ -27,9 +27,7 @@ public class ImmutableMemoryManager {
 
     protected ImmutableMemoryManager(ImmutableMemoryManager original) {
         this.memories = new ConcurrentHashMap<>();
-        original.memories.forEach((type, val) -> {
-            this.memories.put(type, val.copy());
-        });
+        original.memories.forEach((type, val) -> this.memories.put(type, val.copy()));
     }
 
     protected ImmutableMemoryManager(List<MemoryValue<?>> values) {

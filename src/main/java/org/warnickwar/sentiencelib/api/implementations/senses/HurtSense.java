@@ -4,7 +4,6 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import org.warnickwar.sentiencelib.api.core.memories.MemoryManager;
-import org.warnickwar.sentiencelib.api.core.sense.Sense;
 
 public class HurtSense extends BasicEntitySense<LivingEntity> {
 

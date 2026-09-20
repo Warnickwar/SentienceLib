@@ -1,7 +1,6 @@
 package org.warnickwar.sentiencelib.api.core.debug.components;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Range;

@@ -8,7 +8,6 @@ import org.warnickwar.sentiencelib.api.core.actions.ActionPlan;
 import org.warnickwar.sentiencelib.api.core.identifier.IdentifiedData;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 

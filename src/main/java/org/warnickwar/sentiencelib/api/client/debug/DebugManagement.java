@@ -31,7 +31,6 @@ public final class DebugManagement {
 
     // Debug Information Management
     private static final Map<UUID, InfoEntry> entries = new Object2ObjectOpenHashMap<>();
-    private static final Map<UUID, DebugInformation> infoCache = new Object2ObjectOpenHashMap<>();
 
     // Logic
 
@@ -80,7 +79,6 @@ public final class DebugManagement {
     public static void handleNewInformation(S2CDebugInformationPacket packet) {
         DebugInformation info = packet.info();
         InfoEntry entry = entries.put(info.getUUID(), new InfoEntry(info));
-        infoCache.put(info.getUUID(), info);
 
         // Handle Archetyping
         createdArchetypes.values().forEach(a -> {
@@ -93,13 +91,10 @@ public final class DebugManagement {
     private static void removeInformation(UUID id) {
         removeInformationFromArchetypes(entries.get(id));
         entries.remove(id);
-        infoCache.remove(id);
     }
 
     private static void removeInformationFromArchetypes(InfoEntry entry) {
-        createdArchetypes.values().forEach(archetype -> {
-            archetype.remove(entry.identifier);
-        });
+        createdArchetypes.values().forEach(archetype -> archetype.remove(entry.identifier));
     }
 
     // TODO: Check for safety
@@ -149,9 +144,7 @@ public final class DebugManagement {
     static Map<DebugSystem, Collection<DebugInformation>> getQueuedRenderInformation() {
         Map<DebugSystem, Collection<DebugInformation>> results = new HashMap<>();
 
-        activeSystems.forEach(entry -> {
-            results.put(entry.system, entry.archetype.patrons.values().stream().map(e -> e.info).collect(Collectors.toUnmodifiableSet()));
-        });
+        activeSystems.forEach(entry -> results.put(entry.system, entry.archetype.patrons.values().stream().map(e -> e.info).collect(Collectors.toUnmodifiableSet())));
 
         return Collections.unmodifiableMap(results);
     }
@@ -163,9 +156,9 @@ public final class DebugManagement {
 
     private static class InfoEntry {
 
-        UUID identifier;
+        final UUID identifier;
 
-        DebugInformation info;
+        final DebugInformation info;
         float timeLeft;
 
         InfoEntry(DebugInformation information) {
@@ -179,6 +172,7 @@ public final class DebugManagement {
     private static class SystemEntry {
 
         // Used primarily to render to user
+        @SuppressWarnings("FieldCanBeLocal")
         private final ResourceLocation id;
         private final DebugSystem system;
         private boolean active;
@@ -198,7 +192,7 @@ public final class DebugManagement {
     private static class Archetype {
         final Set<DebugComponentType<?>> archetypeComponents;
 
-        Map<UUID, InfoEntry> patrons = new Object2ObjectOpenHashMap<>();
+        final Map<UUID, InfoEntry> patrons = new Object2ObjectOpenHashMap<>();
 
         Archetype(Set<DebugComponentType<?>> archetypeComponents) {
             this.archetypeComponents = archetypeComponents;

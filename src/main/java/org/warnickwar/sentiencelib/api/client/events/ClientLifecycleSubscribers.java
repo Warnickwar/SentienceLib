@@ -15,6 +15,7 @@ import org.warnickwar.sentiencelib.registries.ModKeybinds;
  */
 public class ClientLifecycleSubscribers {
 
+    // TODO Deprecate this in favor of registering it directly before posting the event
     @SubscribeEvent
     public static void debugRegistration$test(RegisterDebugSystemEvent evt) {
         evt.register(Constants.loc("default-entity-renderer"), new BasicEntityDebugRenderer(), true);

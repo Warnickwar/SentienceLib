@@ -1,15 +1,12 @@
 package org.warnickwar.sentiencelib.api.core.debug.components;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.core.debug.DebugComponent;
 import org.warnickwar.sentiencelib.api.core.debug.DebugComponentType;
 

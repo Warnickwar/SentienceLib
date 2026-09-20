@@ -1,6 +1,7 @@
 package org.warnickwar.sentiencelib.api.core.debug;
 
 import net.minecraft.resources.ResourceLocation;
+import org.warnickwar.sentiencelib.api.ModRegistries;
 
 import javax.annotation.Nullable;
 import java.util.function.Consumer;
@@ -25,13 +26,12 @@ public final class DebugComponentType<T extends DebugComponent> {
 
     @Nullable
     public static ResourceLocation getKey(DebugComponentType<?> component) {
-        // TODO: Make when Registry is made
-        return null;
+        return ModRegistries.DEBUG_COMPONENTS.getKey(component);
     }
 
     @Nullable
     public static DebugComponentType<?> getType(ResourceLocation location) {
-        return null;
+        return ModRegistries.DEBUG_COMPONENTS.get(location);
     }
 
     public static <T extends DebugComponent> DebugComponentType<T> create(ComponentFactory<T> factory) {

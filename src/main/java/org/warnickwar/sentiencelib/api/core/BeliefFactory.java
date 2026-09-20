@@ -6,32 +6,22 @@ import org.warnickwar.sentiencelib.api.core.sense.ImmutableSenseManager;
 import org.warnickwar.sentiencelib.api.core.sense.Sense;
 import org.warnickwar.sentiencelib.api.core.sense.SenseType;
 
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
-public class BeliefFactory {
-
-    final Set<IdentifiedData<Belief>> results = new HashSet<>();
-    private final ImmutableSenseManager senses;
-
-    private boolean locked;
+public class BeliefFactory extends FactoryUtil<ImmutableSenseManager, Belief> {
 
     public BeliefFactory(ImmutableSenseManager senses) {
-        this.senses = senses;
-        locked = false;
+        super(senses);
     }
 
     // <---> Belief Management <--->
 
-    public BeliefFactory addBelief(Identity<Belief> id, Belief belief) {
-        if (locked) throw new IllegalStateException("Cannot add Belief to a closed Belief Factory!");
-        results.add(IdentifiedData.of(id, belief));
-        return this;
+    public BeliefFactory register(Identity<Belief> id, Belief belief) {
+        return register(IdentifiedData.of(id, belief));
     }
 
-    public BeliefFactory addBelief(IdentifiedData<Belief> beliefData) {
-        if (locked) throw new IllegalStateException("Cannot add Belief to a closed Belief Factory!");
+    public BeliefFactory register(IdentifiedData<Belief> beliefData) {
+        throwIfLocked();
         results.add(beliefData);
         return this;
     }
@@ -39,19 +29,15 @@ public class BeliefFactory {
     // <---> Sense Management <--->
 
     public boolean hasSense(SenseType<?> senseType) {
-        return senses.hasSense(senseType);
+        return availableData.hasSense(senseType);
     }
 
     public <T extends Sense> Optional<T> getSense(SenseType<T> senseType) {
-        return senses.getSense(senseType);
+        return availableData.getSense(senseType);
     }
 
-    // <---> Finalization <--->
-
-    Set<IdentifiedData<Belief>> closeFactory() {
-        if (locked) throw new IllegalStateException("Cannot close an already closed Belief Factory!");
-        this.locked = true;
-        return results;
+    public <T extends Sense> T getSenseSafe(SenseType<T> senseType) {
+        return getSense(senseType).orElseThrow();
     }
 
 
