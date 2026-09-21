@@ -11,12 +11,7 @@ public final class Identity<T> {
     public final String name;
 
     Identity(String name) {
-        if (validIdentifier(name)) {
-            this.name = name;
-        } else  {
-            // QUESTION should I keep it  limited as such? Might be unnecessary
-            throw new IllegalArgumentException("Non [a-z0-9/._-] Identifier: " + name);
-        }
+        this.name = name;
     }
 
     // NOTE At the end of the day, this class is simply a record
@@ -44,16 +39,16 @@ public final class Identity<T> {
         return Objects.hashCode(name);
     }
 
-    private static boolean validIdentifier(String check) {
-        for (char c : check.toCharArray()) {
-            if (!checkChar(c)) return false;
-        }
-        return true;
-    }
-
-    private static boolean checkChar(char c) {
-        return c == '_' || c == '-' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '/' || c == '.';
-    }
+//    private static boolean validIdentifier(String check) {
+//        for (char c : check.toCharArray()) {
+//            if (!checkChar(c)) return false;
+//        }
+//        return true;
+//    }
+//
+//    private static boolean checkChar(char c) {
+//        return c == '_' || c == '-' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '/' || c == '.';
+//    }
 
     // TODO: Maybe have a cache system similar to Strings
 

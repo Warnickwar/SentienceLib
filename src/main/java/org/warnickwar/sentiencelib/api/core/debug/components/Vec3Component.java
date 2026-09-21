@@ -7,32 +7,33 @@ import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.core.debug.DebugComponent;
 import org.warnickwar.sentiencelib.api.core.debug.DebugComponentType;
 
-public class VelocityComponent extends DebugComponent {
+@SuppressWarnings("unused")
+public class Vec3Component extends DebugComponent {
 
-    private Vec3 momentum = Constants.DEFAULT_LOCATION;
+    private Vec3 vector = Constants.DEFAULT_LOCATION;
 
-    public VelocityComponent(@NotNull DebugComponentType<?> type) {
+    public Vec3Component(@NotNull DebugComponentType<?> type) {
         super(type);
     }
 
-    public void setMomentum(@NotNull Vec3 momentum) {
-        this.momentum = momentum;
+    public void setVector(Vec3 vector) {
+        this.vector = vector;
     }
 
-    public Vec3 getMomentum() {
-        return  momentum;
+    public Vec3 getVector() {
+        return this.vector;
     }
 
     @Override
     public void write(ByteBuf networkBuffer) {
-        networkBuffer.writeDouble(momentum.x);
-        networkBuffer.writeDouble(momentum.y);
-        networkBuffer.writeDouble(momentum.z);
+        networkBuffer.writeDouble(vector.x);
+        networkBuffer.writeDouble(vector.y);
+        networkBuffer.writeDouble(vector.z);
     }
 
     @Override
     public void read(ByteBuf networkBuffer) {
-        momentum = new Vec3(
+        vector = new Vec3(
             networkBuffer.readDouble(),
             networkBuffer.readDouble(),
             networkBuffer.readDouble()

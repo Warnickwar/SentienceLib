@@ -25,7 +25,7 @@ import java.util.function.Supplier;
 
 public final class Agent<O> {
 
-    private static final Collection<IContextProvider> DEFAULT_EMPTY_PROVIDERS = ImmutableSet.of();
+    private static final Collection<IContextProvider> DEFAULT_EMPTY_PROVIDERS = new ArrayList<>();
 
     // Cache to avoid constantly formatting
     // If the Modid changes at runtime, we have bigger issues tbh.
@@ -399,23 +399,23 @@ public final class Agent<O> {
         }
 
         public Agent<O> build() {
-            // Set up Senses, important to every part of building
-            sensorSetup.accept(instance.senses);
-
-            // Collect Factories
+            // Set up Senses and Beliefs
             var beliefFactory = new BeliefFactory(instance.senses);
+            sensorSetup.accept(instance.senses);
+            beliefSetup.accept(beliefFactory);
+
+            beliefFactory.closeFactory().forEach(this::addBelief);
+
+            // Delegate extra Factories out
+
             var desireFactory = new DesireFactory(instance.beliefs);
             var actionFactory = new ActionFactory(instance.beliefs);
 
-            // Delegate Factories out
-            beliefSetup.accept(beliefFactory);
             desireSetup.accept(desireFactory);
             actionSetup.accept(actionFactory);
 
             // Collect returned data and inject into Agent
-            // QUESTION maybe figure out how to have it inject directly into the Agent?
 
-            beliefFactory.closeFactory().forEach(this::addBelief);
             desireFactory.closeFactory().forEach(this::addDesire);
             actionFactory.closeFactory().forEach(this::addAction);
 

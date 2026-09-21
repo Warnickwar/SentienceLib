@@ -9,12 +9,14 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.warnickwar.sentiencelib.api.core.Agent;
 import org.warnickwar.sentiencelib.api.core.Desire;
 import org.warnickwar.sentiencelib.api.core.actions.Action;
 import org.warnickwar.sentiencelib.api.core.debug.components.BasicDetailsComponent;
+import org.warnickwar.sentiencelib.api.core.debug.components.Vec3Component;
 import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import org.warnickwar.sentiencelib.network.S2CDebugInformationPacket;
 
@@ -86,17 +88,28 @@ public final class DebugInformation {
 
     // DEFAULT CONFIGURATIONS
 
-    @SuppressWarnings("resource")
     public static <T extends Entity> void fromEntity(@NotNull T entity, @NotNull Agent<T> agent) {
         if (entity.level().isClientSide) return;
         DebugInformation.start(entity.getUUID(), DEFAULT_TTL)
             .addComponent(ModDebugComponents.MOB_NAME.construct(comp -> comp.setMobName(entity)))
             .addComponent(ModDebugComponents.MOB_TYPE.construct(comp -> comp.setEntityType(entity.getType())))
-            .addComponent(ModDebugComponents.POSITION.construct(comp -> comp.setPosition(entity.position())))
-            .addComponent(ModDebugComponents.VELOCITY.construct(comp -> comp.setMomentum(entity.getDeltaMovement())))
+            .addComponent(ModDebugComponents.POSITION.construct(comp -> comp.setVector(entity.position())))
+            .addComponent(ModDebugComponents.VELOCITY.construct(comp -> setVelocityComponentFromEntity(comp, entity)))
             .addComponent(ModDebugComponents.LEVEL.construct(comp -> comp.setLevelId(entity.level().dimension())))
             .addComponent(ModDebugComponents.BASIC_DETAILS.construct(comp -> setupBasicDetails(comp, agent)))
             .sendToChunk((ServerLevel) entity.level(), entity.chunkPosition());
+    }
+
+    private static void setVelocityComponentFromEntity(Vec3Component comp, Entity ent) {
+        Vec3 currentVelocity = ent.getDeltaMovement();
+        double gravity = ent.getGravity();
+        comp.setVector(
+            new Vec3(
+                currentVelocity.x,
+                currentVelocity.y + gravity,
+                currentVelocity.z
+            )
+        );
     }
 
     private static void setupBasicDetails(BasicDetailsComponent component, Agent<?> agent) {

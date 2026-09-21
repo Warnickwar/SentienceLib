@@ -3,6 +3,8 @@ package org.warnickwar.sentiencelib.gametest;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
+import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
+import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +21,12 @@ import org.warnickwar.sentiencelib.api.implementations.senses.HurtSense;
 
 import java.util.Optional;
 
-public final class MindTestEntity extends PathfinderMob {
+public final class TestEntity extends PathfinderMob {
 
-    private final Agent<MindTestEntity> agent;
+    private final Agent<TestEntity> agent;
     private final MemoryManager memories;
 
-    public MindTestEntity(EntityType<? extends PathfinderMob> type, Level world) {
+    public TestEntity(EntityType<? extends PathfinderMob> type, Level world) {
         super(type, world);
         this.memories = new MemoryManager();
         this.agent = Agent.start(this)
@@ -89,6 +91,7 @@ public final class MindTestEntity extends PathfinderMob {
         );
     }
 
+    // TODO Figure out why IdleStrategy waits so long, and WanderStrategy (and the Wander desire) flickers so frequently
     private void setupActions(ActionFactory factory) {
         factory.register(
             Identity.of("idle"),
@@ -130,4 +133,7 @@ public final class MindTestEntity extends PathfinderMob {
         DebugInformation.fromEntity(this, agent);
     }
 
+    public static AttributeSupplier getDefaultAttributes() {
+        return PathfinderMob.createMobAttributes().add(Attributes.ATTACK_DAMAGE, 4).build();
+    }
 }

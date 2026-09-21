@@ -5,13 +5,13 @@ import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.warnickwar.sentiencelib.Constants;
-import org.warnickwar.sentiencelib.gametest.MindTestEntity;
+import org.warnickwar.sentiencelib.gametest.TestEntity;
 
 public final class ModEntities {
 
-    public static final EntityType<MindTestEntity> DEFAULT_TEST =
+    public static final EntityType<TestEntity> DEFAULT_TEST =
             EntityType.Builder.of(
-                MindTestEntity::new,
+                TestEntity::new,
                 MobCategory.MISC)
                     .noSave()
                     .sized(0.8f,0.8f)

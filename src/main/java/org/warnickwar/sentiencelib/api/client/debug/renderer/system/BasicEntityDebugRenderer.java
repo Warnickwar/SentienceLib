@@ -1,17 +1,14 @@
 package org.warnickwar.sentiencelib.api.client.debug.renderer.system;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.math.Transformation;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.core.Position;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Quaternionf;
 import org.warnickwar.sentiencelib.Constants;
 import org.warnickwar.sentiencelib.api.client.debug.renderer.DebugSystem;
 import org.warnickwar.sentiencelib.api.core.debug.DebugComponentType;
@@ -27,8 +24,14 @@ import java.util.UUID;
 public class BasicEntityDebugRenderer extends DebugSystem {
 
     private static final double RENDER_RANGE = 30.0D;
-    private static final float ACTION_TEXT_SCALE = 0.02F;
-    private static final float GOAL_TEXT_SCALE = 0.03F;
+
+    private static final float TYPE_TEXT_SCALE = 0.025F;
+    private static final float NAME_TEXT_SCALE = 0.025F;
+    private static final float ACTION_TEXT_SCALE = 0.025F;
+    private static final float DESIRE_TEXT_SCALE = 0.0275F;
+
+    private static final float STARTING_OFFSET = 1.25F;
+    private static final float OFFSET_MOD = 0.25F;
 
     private static final double RAYCAST_DISTANCE = 8;
 
@@ -42,13 +45,8 @@ public class BasicEntityDebugRenderer extends DebugSystem {
         Vec3 eyePosition = camEntity.getEyePosition();
         Vec3 viewVector = camEntity.getViewVector(1.0F).scale(RAYCAST_DISTANCE);
 
-        // Render Setup
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-//        RenderSystem.disableTexture();
-
         for (DebugInformation info : validInformationComponents) {
-            AABB infoAABB = AABB.ofSize(info.getComponentSafe(ModDebugComponents.POSITION).getPosition(), 0.75, 0.75, 0.75).expandTowards(viewVector);
+            AABB infoAABB = AABB.ofSize(info.getComponentSafe(ModDebugComponents.POSITION).getVector(), 1.0, 1.0, 1.0);
             if (hitsAABB(eyePosition, viewVector, infoAABB, RAYCAST_DISTANCE * RAYCAST_DISTANCE)) {
                 lastLookedAtUuid = info.getUUID();
                 break;
@@ -65,17 +63,17 @@ public class BasicEntityDebugRenderer extends DebugSystem {
         if (client.level.dimension() != level.levelId) return;
 
         // Don't render if too far away
-        PositionComponent pos = current.getComponentSafe(ModDebugComponents.POSITION);
+        Vec3Component pos = current.getComponentSafe(ModDebugComponents.POSITION);
 
         // Consider Velocity if supplied
-        VelocityComponent velocity = current.getComponent(ModDebugComponents.VELOCITY);
+        Vec3Component velocity = current.getComponent(ModDebugComponents.VELOCITY);
 
         // get Partial Tick
         float partialTick = getCurrentPartialTick(client);
 
-        Vec3 resPos = pos.getPosition();
+        Vec3 resPos = pos.getVector();
         if (velocity != null) {
-            Vec3 velocityVector = velocity.getMomentum();
+            Vec3 velocityVector = velocity.getVector();
             resPos = resPos.add(velocityVector.x * partialTick, velocityVector.y * partialTick, velocityVector.z * partialTick);
         }
 
@@ -86,38 +84,57 @@ public class BasicEntityDebugRenderer extends DebugSystem {
         // Render normally according to specifications
         boolean isSelected = lastLookedAtUuid == current.getUUID();
         // Done to properly render the stack
-        int offset = 0;
+        float offset = STARTING_OFFSET;
 
         EntityTypeComponent type = current.getComponentSafe(ModDebugComponents.MOB_TYPE);
         BasicDetailsComponent mindDetails = current.getComponentSafe(ModDebugComponents.BASIC_DETAILS);
 
         MobNameComponent name = current.getComponent(ModDebugComponents.MOB_NAME);
 
+        Quaternionf orientation = client.gameRenderer.getMainCamera().rotation();
+
         EntityType<?> entityType = type.getEntityType();
         assert entityType != null;
 
-        renderTextOver(client, client.gameRenderer.getMainCamera(), resPos, poseStack, buffer,
-            offset++, entityType.toString(), Constants.TEXT_COLOR.WHITE, 0.03F);
+        Font font = client.font;
+
+        renderFloatingText(font, camX, camY, camZ, orientation,
+            poseStack, buffer, EntityType.getKey(entityType).toString(),
+            resPos.x, resPos.y + offset, resPos.z,
+            Constants.TEXT_COLOR.WHITE, TYPE_TEXT_SCALE, 0);
+        offset += OFFSET_MOD;
 
         // Render a custom name as well if the Entity has one
         if (name != null) {
-            renderTextOver(client, client.gameRenderer.getMainCamera(), resPos, poseStack, buffer,
-                offset++, name.getMobName(), Constants.TEXT_COLOR.WHITE, 0.03F);
+            renderFloatingText(font, camX, camY, camZ, orientation,
+                poseStack, buffer, name.getMobName(),
+                resPos.x, resPos.y + offset, resPos.z,
+                Constants.TEXT_COLOR.WHITE, NAME_TEXT_SCALE, 0);
+            offset += OFFSET_MOD;
         }
 
         // Display Actions if Selected
         if (isSelected) {
             String[] currentActions = mindDetails.getCurrentActions();
             for (int i = 4; i >= 0; i--) {
-                int color = i == 0 ? Constants.TEXT_COLOR.WHITE : Constants.TEXT_COLOR.ORANGE;
-                renderTextOver(client, client.gameRenderer.getMainCamera(), resPos, poseStack, buffer,
-                    offset++, i + ": " + currentActions[i], color, ACTION_TEXT_SCALE);
+                int color = i == 0 ?
+                    Constants.TEXT_COLOR.WHITE :
+                    Constants.TEXT_COLOR.ORANGE;
+                renderFloatingText(font, camX, camY, camZ, orientation,
+                    poseStack, buffer, (i+1) + ": " + currentActions[i],
+                    resPos.x, resPos.y + offset, resPos.z,
+                    color, ACTION_TEXT_SCALE, 0);
+                offset += OFFSET_MOD;
             }
         }
 
         // Always render current Desire
-        renderTextOver(client, client.gameRenderer.getMainCamera(), resPos, poseStack, buffer,
-            offset, mindDetails.getCurrentDesire(), mindDetails.hasDesire() ? Constants.TEXT_COLOR.GREEN : Constants.TEXT_COLOR.RED, GOAL_TEXT_SCALE);
+        renderFloatingText(font, camX, camY, camZ, orientation,
+            poseStack, buffer, mindDetails.getCurrentDesire(),
+            resPos.x, resPos.y + offset, resPos.z,
+            mindDetails.hasDesire() ?
+            Constants.TEXT_COLOR.RED : Constants.TEXT_COLOR.GREEN,
+            DESIRE_TEXT_SCALE, 0);
     }
 
     @Override
@@ -135,39 +152,21 @@ public class BasicEntityDebugRenderer extends DebugSystem {
         );
     }
 
-    private void renderTextOver(Minecraft client, Camera camera, Position position, PoseStack poseStack, MultiBufferSource.BufferSource buffer,
-                                int offset, String text, int color, float scale) {
-        if (!camera.isInitialized()) return;
+    public static void renderFloatingText(Font font, double camX, double camY, double camZ, Quaternionf cameraRotation,
+                                          PoseStack poseStack, MultiBufferSource bufferSource,
+                                          String text,
+                                          double x, double y, double z,
+                                          int color, float scale,
+                                          float xOffset) {
+            poseStack.pushPose();
+            poseStack.translate((float)(x - camX), (float)(y - camY), (float)(z - camZ));
+            poseStack.mulPose(cameraRotation);
+            poseStack.scale(scale, -scale, scale);
+            float f = (float)(-font.width(text)) / 2.0F;
+            f -= xOffset / scale;
+            font.drawInBatch(text, f, 0.0F, color, false, poseStack.last().pose(), bufferSource, Font.DisplayMode.SEE_THROUGH, 0, 15728880);
+            poseStack.popPose();
 
-        Position camPos = camera.getPosition();
-        Font font = client.font;
-
-        poseStack.pushPose();
-        poseStack.translate((position.x() - camPos.x()),(((position.y() + 2.4D + offset * 0.25D) - camPos.y()) + 0.07F), (position.z() - camPos.z()));
-        poseStack.mulPose(camera.rotation());
-        poseStack.scale(scale, -scale, scale);
-
-//        RenderSystem.enableTexture();
-        RenderSystem.disableDepthTest();
-        RenderSystem.depthMask(true);
-
-        poseStack.scale(-1.0F, 1.0F, 1.0F);
-
-        RenderSystem.applyModelViewMatrix();
-
-        float finalScale = (-font.width(text)) / 2.0F;
-        finalScale -= 0.5F / scale;
-
-        float backgroundOpacity = client.options.getBackgroundOpacity(0.25F);
-        int resultBackgroundOpacity = (int)(backgroundOpacity * 255.0F) << 24;
-
-        font.drawInBatch(text, finalScale, 0.0F, color, false, Transformation.identity().getMatrix(), buffer, Font.DisplayMode.NORMAL, resultBackgroundOpacity, 15728880);
-
-        buffer.endBatch();
-        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
-        RenderSystem.enableDepthTest();
-        poseStack.popPose();
-        RenderSystem.applyModelViewMatrix();
     }
 
     @SuppressWarnings("SameParameterValue")

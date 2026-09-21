@@ -1,4 +1,4 @@
-package org.warnickwar.sentiencelib.api.client.events;
+package org.warnickwar.sentiencelib.client.events;
 
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.warnickwar.sentiencelib.api.client.debug.DebugManagement;

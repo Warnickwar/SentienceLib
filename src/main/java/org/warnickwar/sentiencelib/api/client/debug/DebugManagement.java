@@ -79,7 +79,8 @@ public final class DebugManagement {
 
     public static void handleNewInformation(S2CDebugInformationPacket packet) {
         DebugInformation info = packet.info();
-        InfoEntry entry = entries.put(info.getUUID(), new InfoEntry(info));
+        InfoEntry entry = new InfoEntry(info);
+        entries.put(info.getUUID(), new InfoEntry(info));
 
         // Handle Archetyping
         createdArchetypes.values().forEach(a -> {
@@ -141,10 +142,15 @@ public final class DebugManagement {
      * @return a read-only map of each DebugSystem with valid DebugInformation to render.
      */
     // TODO: Figure out a better way to do this other than getting it every frame.
-    static Map<DebugSystem, Collection<DebugInformation>> getQueuedRenderInformation() {
+    private static Map<DebugSystem, Collection<DebugInformation>> getQueuedRenderInformation() {
         Map<DebugSystem, Collection<DebugInformation>> results = new HashMap<>();
 
-        activeSystems.forEach(entry -> results.put(entry.system, entry.archetype.patrons.values().stream().map(e -> e.info).collect(Collectors.toUnmodifiableSet())));
+        activeSystems.forEach(entry ->
+            results.put(entry.system,
+                entry.archetype.patrons.values()
+                    .stream()
+                    .map(e -> e.info)
+                    .collect(Collectors.toUnmodifiableSet())));
 
         return Collections.unmodifiableMap(results);
     }

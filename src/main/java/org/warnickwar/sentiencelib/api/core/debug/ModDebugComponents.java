@@ -19,16 +19,16 @@ public final class ModDebugComponents {
             DebugComponentType.create(LevelComponent::new)
         );
 
-    public static final DebugComponentType<PositionComponent> POSITION =
+    public static final DebugComponentType<Vec3Component> POSITION =
         register(
             "world_position",
-            DebugComponentType.create(PositionComponent::new)
+            DebugComponentType.create(Vec3Component::new)
         );
 
-    public static final DebugComponentType<VelocityComponent> VELOCITY =
+    public static final DebugComponentType<Vec3Component> VELOCITY =
         register(
             "velocity",
-            DebugComponentType.create(VelocityComponent::new)
+            DebugComponentType.create(Vec3Component::new)
         );
 
     public static final DebugComponentType<MobNameComponent> MOB_NAME =

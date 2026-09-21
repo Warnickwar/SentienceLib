@@ -4,7 +4,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import org.warnickwar.sentiencelib.api.client.SentiencelibClient;
+import org.warnickwar.sentiencelib.client.SentiencelibClient;
 import org.warnickwar.sentiencelib.events.CommonLifecycleSubscribers;
 
 /**

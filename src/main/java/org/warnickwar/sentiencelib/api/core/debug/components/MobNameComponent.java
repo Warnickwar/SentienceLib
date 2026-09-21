@@ -2,6 +2,7 @@ package org.warnickwar.sentiencelib.api.core.debug.components;
 
 import io.netty.buffer.ByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.protocol.game.DebugEntityNameGenerator;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.NotNull;
 import org.warnickwar.sentiencelib.api.core.debug.DebugComponent;
@@ -17,7 +18,7 @@ public class MobNameComponent extends DebugComponent {
     }
 
     public void setMobName(Entity mob) {
-        this.mobName = mob.getName().getString();
+        this.mobName = DebugEntityNameGenerator.getEntityName(mob);
     }
 
     @NotNull

@@ -63,6 +63,7 @@ public class MemoryManager extends ImmutableMemoryManager {
         this.memories.put(type, value);
     }
 
+    // TODO: Sometimes issues with saving Memories, from a null value. Investigate.
     public void save(String id, CompoundTag tag) {
         ListTag listTag = new ListTag();
         memories.forEach((type, val) -> {

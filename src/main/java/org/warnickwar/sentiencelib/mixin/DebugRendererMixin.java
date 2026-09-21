@@ -13,7 +13,6 @@ import org.warnickwar.sentiencelib.api.client.debug.DebugManagement;
 
 // We want the mod debug renderers to be synchronized with Vanilla
 //  So to avoid more complicated processing.
-@SuppressWarnings("NameDoesntMatchTargetClass")
 @Mixin(DebugRenderer.class)
 public abstract class DebugRendererMixin {
 

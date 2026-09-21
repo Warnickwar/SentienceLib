@@ -1,13 +1,14 @@
-package org.warnickwar.sentiencelib.api.client.events;
+package org.warnickwar.sentiencelib.client.events;
 
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.client.event.InputEvent;
+import org.warnickwar.sentiencelib.client.SentiencelibClient;
 import org.warnickwar.sentiencelib.registries.ModKeybinds;
 
 /**
  * Only runs on the Logical Client;
  * Handles NEOFORGE Bus Gameplay Events
- * @see org.warnickwar.sentiencelib.api.client.SentiencelibClient
+ * @see SentiencelibClient
  */
 public final class ClientSubscribers {
 
