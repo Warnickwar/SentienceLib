@@ -6,6 +6,7 @@ import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import java.util.Map;
 import java.util.Optional;
 
+@SuppressWarnings("unused")
 public class DesireFactory extends FactoryUtil<Map<Identity<Belief>, IdentifiedData<Belief>>, Desire> {
 
     DesireFactory(Map<Identity<Belief>, IdentifiedData<Belief>> beliefs) {
@@ -26,13 +27,13 @@ public class DesireFactory extends FactoryUtil<Map<Identity<Belief>, IdentifiedD
 
     // <---> Belief Management <--->
 
-    public Optional<Belief> getSense(Identity<Belief> beliefType) {
+    public Optional<IdentifiedData<Belief>> getBelief(Identity<Belief> beliefType) {
         return availableData.containsKey(beliefType) ?
-            Optional.of(availableData.get(beliefType).getValue()) :
+            Optional.of(availableData.get(beliefType)) :
             Optional.empty();
     }
 
-    public Belief getSenseSafe(Identity<Belief> beliefType) {
-        return availableData.get(beliefType).getValue();
+    public IdentifiedData<Belief> getBeliefSafe(Identity<Belief> beliefType) {
+        return availableData.get(beliefType);
     }
 }

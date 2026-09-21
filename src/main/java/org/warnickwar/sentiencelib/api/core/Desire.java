@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Supplier;
 
+@SuppressWarnings("unused")
 public class Desire {
 
     private static final Supplier<Double> DEFAULT_PRIORITY = () -> 1.0D;
@@ -24,10 +25,14 @@ public class Desire {
         return new HashSet<>(desires);
     }
 
+    public static Desire.Builder start() {
+        return new Builder();
+    }
+
     public static class Builder {
         private final Desire desire;
 
-        public Builder() {
+        Builder() {
             desire = new Desire();
         }
 

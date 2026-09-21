@@ -5,10 +5,20 @@ import net.minecraft.world.phys.Vec3;
 import java.util.Objects;
 import java.util.function.Supplier;
 
+@SuppressWarnings("unused")
 public final class Belief {
 
+    private static final Belief belief$TRUE;
+    private static final Belief belief$FALSE;
+
     private static final Supplier<Boolean> ALWAYS_TRUE = () -> true;
-    private static final Supplier<Boolean> ALWAYS_FALSE = () -> false;
+
+    static {
+        belief$TRUE = new Belief();
+        belief$FALSE = new Belief();
+        belief$TRUE.precondition = () -> true;
+        belief$FALSE.precondition = () -> false;
+    }
 
     private Supplier<Boolean> precondition = ALWAYS_TRUE;
 
@@ -21,19 +31,12 @@ public final class Belief {
         return precondition.get();
     }
 
-    // These create new Beliefs for the sake of having multiple
-    // "Always True" or "Always False" beliefs.
-    // This allows for multiple constant Beliefs.
     public static Belief alwaysTrue() {
-        Belief res = new Belief();
-        res.precondition = ALWAYS_TRUE;
-        return res;
+        return belief$TRUE;
     }
 
     public static Belief alwaysFalse() {
-        Belief res = new Belief();
-        res.precondition = ALWAYS_FALSE;
-        return res;
+        return belief$FALSE;
     }
 
     public static Belief nearLocation(Supplier<Vec3> positionSupplier, Supplier<Vec3> locationTarget, float distance) {
@@ -58,6 +61,7 @@ public final class Belief {
         return Objects.hashCode(precondition);
     }
 
+    // Why does this need a Builder?
     public static class Builder {
         private final Belief belief = new Belief();
 

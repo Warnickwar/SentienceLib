@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
+@SuppressWarnings("unused")
 public class ImmutableMemoryManager {
 
     public static final Codec<ImmutableMemoryManager> CODEC = RecordCodecBuilder.create(inst -> inst.group(
@@ -51,14 +52,14 @@ public class ImmutableMemoryManager {
         return (val = memories.get(type)) != null && !val.hasExpired();
     }
 
-    public <T> boolean compareMemory(@NotNull MemoryModuleType<T> type, @NotNull Predicate<Optional<T>> expectedFilter) {
-        return expectedFilter.test(Optional.ofNullable(this.getMemory(type)));
-    }
-
     @SuppressWarnings("unchecked")
     @Nullable
     protected <T> MemoryValue<T> getMemoryValue(@NotNull MemoryModuleType<T> type) {
         return (MemoryValue<T>) memories.get(type);
+    }
+
+    public <T> boolean filterMemory(@NotNull MemoryModuleType<T> type, @NotNull Predicate<Optional<T>> expectedFilter) {
+        return expectedFilter.test(Optional.ofNullable(this.getMemory(type)));
     }
 
     @SuppressWarnings("unchecked")

@@ -7,9 +7,10 @@ import org.warnickwar.sentiencelib.api.core.identifier.Identity;
 import java.util.Map;
 import java.util.Optional;
 
-public class ActionFactory extends FactoryUtil<Map<Identity<Desire>, IdentifiedData<Desire>>, Action> {
+@SuppressWarnings("unused")
+public class ActionFactory extends FactoryUtil<Map<Identity<Belief>, IdentifiedData<Belief>>, Action> {
 
-    public ActionFactory(Map<Identity<Desire>, IdentifiedData<Desire>> available) {
+    public ActionFactory(Map<Identity<Belief>, IdentifiedData<Belief>> available) {
         super(available);
     }
 
@@ -25,16 +26,16 @@ public class ActionFactory extends FactoryUtil<Map<Identity<Desire>, IdentifiedD
         return this;
     }
 
-    // Desire Accessing
+    // Belief Accessing
 
-    public Optional<Desire> getDesire(Identity<Desire> key) {
+    public Optional<IdentifiedData<Belief>> getBelief(Identity<Belief> key) {
         return availableData.containsKey(key) ?
-            Optional.of(availableData.get(key).getValue()) :
+            Optional.of(availableData.get(key)) :
             Optional.empty();
     }
 
-    public Desire getDesireSafe(Identity<Desire> key) {
-        return availableData.get(key).getValue();
+    public IdentifiedData<Belief> getBeliefSafe(Identity<Belief> key) {
+        return availableData.get(key);
     }
 
 }

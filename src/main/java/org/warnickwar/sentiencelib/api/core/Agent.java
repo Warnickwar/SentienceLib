@@ -405,7 +405,7 @@ public final class Agent<O> {
             // Collect Factories
             var beliefFactory = new BeliefFactory(instance.senses);
             var desireFactory = new DesireFactory(instance.beliefs);
-            var actionFactory = new ActionFactory(instance.desires);
+            var actionFactory = new ActionFactory(instance.beliefs);
 
             // Delegate Factories out
             beliefSetup.accept(beliefFactory);

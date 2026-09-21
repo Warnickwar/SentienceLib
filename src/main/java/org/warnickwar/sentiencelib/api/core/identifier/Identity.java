@@ -55,6 +55,8 @@ public final class Identity<T> {
         return c == '_' || c == '-' || c >= 'a' && c <= 'z' || c >= '0' && c <= '9' || c == '/' || c == '.';
     }
 
+    // TODO: Maybe have a cache system similar to Strings
+
     public static <T> Identity<T> of(String modid, String name) {
         return new Identity<>(modid + ":" + name);
     }

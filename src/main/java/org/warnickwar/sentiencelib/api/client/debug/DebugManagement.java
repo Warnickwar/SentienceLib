@@ -15,6 +15,7 @@ import javax.annotation.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@SuppressWarnings("unused")
 public final class DebugManagement {
 
     // TODO: Menu of enabling certain systems?
@@ -97,7 +98,6 @@ public final class DebugManagement {
         createdArchetypes.values().forEach(archetype -> archetype.remove(entry.identifier));
     }
 
-    // TODO: Check for safety
     public static void clear() {
         for (UUID id : entries.keySet()) {
             removeInformation(id);
@@ -172,7 +172,7 @@ public final class DebugManagement {
     private static class SystemEntry {
 
         // Used primarily to render to user
-        @SuppressWarnings("FieldCanBeLocal")
+        @SuppressWarnings({"FieldCanBeLocal", "unused"})
         private final ResourceLocation id;
         private final DebugSystem system;
         private boolean active;
@@ -217,7 +217,8 @@ public final class DebugManagement {
     }
 
     private static int entryComparator(SystemEntry one, SystemEntry two) {
-        // TODO: Make sure this doesn't override each other, System 1 gets priority
-        return Integer.compare(one.system.renderPriority(), two.system.renderPriority());
+        int priorityOne = one.system.renderPriority();
+        int priorityTwo = two.system.renderPriority();
+        return priorityOne == priorityTwo ? 1 : priorityOne < priorityTwo ? -1 : 1;
     }
 }

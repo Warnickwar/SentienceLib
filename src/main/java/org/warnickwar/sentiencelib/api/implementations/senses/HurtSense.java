@@ -7,7 +7,7 @@ import org.warnickwar.sentiencelib.api.core.memories.MemoryManager;
 
 public class HurtSense extends BasicEntitySense<LivingEntity> {
 
-    protected HurtSense(LivingEntity owner, MemoryManager manager) {
+    public HurtSense(LivingEntity owner, MemoryManager manager) {
         super(1, owner, manager);
     }
 

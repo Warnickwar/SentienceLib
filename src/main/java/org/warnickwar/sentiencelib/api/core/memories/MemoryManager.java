@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
 
+@SuppressWarnings("unused")
 public class MemoryManager extends ImmutableMemoryManager {
 
     public static final Codec<MemoryManager> CODEC = ImmutableMemoryManager.CODEC.xmap(MemoryManager::new, ImmutableMemoryManager::new);
@@ -62,24 +63,23 @@ public class MemoryManager extends ImmutableMemoryManager {
         this.memories.put(type, value);
     }
 
-    public void save(CompoundTag tag) {
+    public void save(String id, CompoundTag tag) {
         ListTag listTag = new ListTag();
         memories.forEach((type, val) -> {
             var res = MemoryValue.CODEC.encodeStart(NbtOps.INSTANCE, val);
             res.result().ifPresent(listTag::add);
         });
-        tag.put("memories", listTag);
+        tag.put(id, listTag);
     }
 
-    public void load(CompoundTag tag) {
-        ListTag res = tag.getList("memories", ListTag.TAG_COMPOUND);
+    public void load(String id, CompoundTag tag) {
+        ListTag res = tag.getList(id, ListTag.TAG_COMPOUND);
         res.forEach(elem -> {
             // Do it like this instead of turning the MemoryValue to a ListCodec
             //  So that memories from addons can get wiped.
             var out =  MemoryValue.CODEC.decode(NbtOps.INSTANCE, elem);
             out.result().ifPresent(val -> memories.put(val.getFirst().getType(), val.getFirst()));
         });
-
     }
 
     /**

@@ -59,7 +59,6 @@ public class MeleeAttackStrategy<T extends PathfinderMob> extends EntityStrategy
     public void tick() {
 
         if (forceEnd) return;
-        // TODO: Attack and Pathfinding Logic
 
         LivingEntity target = entity.getTarget();
         assert target != null;
